@@ -93,9 +93,4 @@ public class WalletActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        DataAccess.close();
-    }
 }

@@ -21,16 +21,18 @@ class DataAccess {
     static String PASSWORD = "password";
     static String IV = "iv";
 
-    public DataAccess(Context context) {
+    public static void initialize(Context context) {
         database = new DatabaseOpenHelper(context).getWritableDatabase();
     }
 
     public static User getUser(String login) {
         Cursor cursor = database.rawQuery("select * from users where login = ?", new String[] {login});
+        // check if user with specified login exists
         if(cursor.getCount() == 0)
-            return null; // user's account doesn't exist
+            return null;
         else {
             cursor.moveToFirst();
+            // return instance of User
             return new User(
                     cursor.getLong(cursor.getColumnIndex(USER_ID)),
                     cursor.getString(cursor.getColumnIndex(LOGIN)),
@@ -39,7 +41,6 @@ class DataAccess {
                     cursor.getString(cursor.getColumnIndex(SALT))
             );
         }
-
     }
 
     public static User createUser(String login, String encryptionMethod, String passwordHash, String salt) {

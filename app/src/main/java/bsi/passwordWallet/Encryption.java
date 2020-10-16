@@ -4,6 +4,8 @@ import android.os.Build;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -16,6 +18,7 @@ import java.util.Random;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -27,44 +30,37 @@ class Encryption {
     final static String HMAC = "HMAC";
     private static String PEPPER = "Piperaceae";
 
-    static String encryptSHA265(String input, String salt, String pepper) {
+    static String calculateSHA265(String input, String salt, String pepper) {
+        String hash = "";
         try {
             // get an instance of SHA-256
             MessageDigest md = MessageDigest.getInstance("SHA-256");
 
             // add salt
             md.update(salt.getBytes());
-
             // calculate message digest of the input string - returns byte array
-            byte[] messageDigest = md.digest(input.getBytes());
+            hash = new String(md.digest(input.getBytes()), StandardCharsets.UTF_8);
 
-            // convert byte array into signum representation
-            BigInteger no = new BigInteger(1, messageDigest);
-
-            // convert message digest into hex value
-            StringBuilder hashtext = new StringBuilder(no.toString(16));
-
-            // add preceding 0s to make it 32 bit
-            while (hashtext.length() < 32) {
-                hashtext.insert(0, "0");
-            }
-
-            // return the HashText
-            return hashtext.toString();
-        }
-        // if wrong message digest algorithm was specified
-        catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+
+        return hash;
     }
 
-    static String encryptHMAC() {
-        return "";
-    }
+    static String calculateHMAC(String input, String key, String pepper) {
+        String hash = "";
+        try {
+            final byte[] byteKey = key.getBytes(StandardCharsets.UTF_8);
+            Mac sha512Hmac = Mac.getInstance("HMAC_SHA512");
+            SecretKeySpec keySpec = new SecretKeySpec(byteKey, "HMAC_SHA512");
+            sha512Hmac.init(keySpec);
+            hash = sha512Hmac.doFinal(input.getBytes(StandardCharsets.UTF_8)).toString();
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
 
-
-    static String decryptHMAC() {
-        return "";
+        return hash;
     }
 
     static String encryptAES128(String input, byte[] key, byte[] iv) {

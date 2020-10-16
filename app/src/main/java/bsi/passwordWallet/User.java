@@ -1,7 +1,5 @@
 package bsi.passwordWallet;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -9,23 +7,23 @@ import android.os.Parcelable;
 class User implements Parcelable {
     private long userID;
     private String login;
-    private String encryptionType;
-    private String passwordHash;
+    private String encryptionMethod;
+    private String password;
     private String salt;
 
-    public User(long userID, String login, String encryptionType, String passwordHash, String salt) {
+    public User(long userID, String login, String encryptionType, String password, String salt) {
         this.userID = userID;
         this.login = login;
-        this.encryptionType = encryptionType;
-        this.passwordHash = passwordHash;
+        this.encryptionMethod = encryptionType;
+        this.password = password;
         this.salt = salt;
     }
 
     protected User(Parcel in) {
         userID = in.readLong();
         login = in.readString();
-        encryptionType = in.readString();
-        passwordHash = in.readString();
+        encryptionMethod = in.readString();
+        password = in.readString();
         salt = in.readString();
     }
 
@@ -49,20 +47,16 @@ class User implements Parcelable {
         return login;
     }
 
-    public String getPasswordHash() {
-        return passwordHash;
+    public String getPassword() {
+        return password;
     }
 
     public String getSalt() {
         return salt;
     }
 
-    static boolean loginUser(User user, String password) {
-        String sha256Cipher = Encryption.encryptSHA265(password, user.getSalt(), null);
-        if(sha256Cipher.equals(user.getPasswordHash()))
-            return true;
-        else
-            return false;
+    public String getEncryptionMethod() {
+        return encryptionMethod;
     }
 
     @Override
@@ -74,8 +68,8 @@ class User implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeLong(userID);
         dest.writeString(login);
-        dest.writeString(encryptionType);
-        dest.writeString(passwordHash);
+        dest.writeString(encryptionMethod);
+        dest.writeString(password);
         dest.writeString(salt);
     }
 }
