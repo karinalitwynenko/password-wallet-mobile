@@ -8,4 +8,13 @@ class Validation {
     static public boolean validateLogin(String login) {
         return true;
     }
+
+    static public boolean validateWebsite(String website) {
+        return true;
+    }
+
+    static public boolean validateDescription(String description) {
+        return true;
+    }
+
 }

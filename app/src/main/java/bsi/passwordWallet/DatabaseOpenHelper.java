@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 import androidx.annotation.Nullable;
 
@@ -14,16 +16,18 @@ import static android.content.Context.MODE_PRIVATE;
 
 class DatabaseOpenHelper extends SQLiteOpenHelper {
     Context context;
-    final static String DATABASE_NAME = "password-wallet";
+    final static String DATABASE_NAME = "password-wallet.db";
 
     public DatabaseOpenHelper(Context context) {
         super(context, DATABASE_NAME, null, 1);
         this.context = context;
+        File dbFile = context.getDatabasePath(DATABASE_NAME);
+        if(!dbFile.exists())
+            getWritableDatabase();
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        Log.d("APP", "oncreate");
         db.execSQL(
                 "create table if not exists users (" +
                         "user_id integer primary key autoincrement, " +
@@ -38,14 +42,14 @@ class DatabaseOpenHelper extends SQLiteOpenHelper {
                 "create table if not exists passwords (" +
                         "password_id integer primary key autoincrement, " +
                         "user_id integer not null, " +
-                        "text description, " +
                         "login text not null, " +
+                        "password text not null, " +
+                        "iv text not null, " +
+                        "description text, " +
                         "website text not null, " +
                         "foreign key (user_id) references users (user_id)" +
                         ");"
         );
-
-        //db.execSQL("insert into users values(null, 'user_a', 'passwd')");
     }
 
     @Override

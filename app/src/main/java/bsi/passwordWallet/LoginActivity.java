@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioGroup;
@@ -18,6 +19,8 @@ public class LoginActivity extends AppCompatActivity {
         final EditText loginInput = findViewById(R.id.login_input);
         final EditText passwordInput = findViewById(R.id.password_input);
         final RadioGroup encryptionRadioGroup = findViewById(R.id.encryption_group);
+        passwordInput.setTransformationMethod(new PasswordTransformationMethod());
+        //deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
 
         DataAccess da = new DataAccess(getApplicationContext());
 
@@ -33,8 +36,7 @@ public class LoginActivity extends AppCompatActivity {
                     user = DataAccess.getUser(login);
                     // check if login is already in use
                     if(user != null) {
-                        toast = Toast.makeText(getApplicationContext(), "Login already exists", Toast.LENGTH_SHORT);
-                        toast.show();
+                        displayToast("Login already exists");
                         return;
                     }
 
@@ -52,12 +54,14 @@ public class LoginActivity extends AppCompatActivity {
                     );
 
                     if(user == null) {
-                        feedback = "Couldn't create user's account.";
+                        displayToast("Couldn't create user's account");
                         return;
                     }
 
                     Intent intent = new Intent(getApplicationContext(), WalletActivity.class);
                     intent.putExtra("user", user);
+                    intent.putExtra("user_password", password);
+
                     startActivity(intent);
                 }
             }
@@ -67,33 +71,34 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Intent intent = new Intent(getApplicationContext(), WalletActivity.class);
-                intent.putExtra("user", new User(0, "pajonk", "", "2332", "23"));
-                startActivity(intent);
-//                String login = loginInput.getText().toString();
-//                String password = passwordInput.getText().toString();
-//                String feedback;
-//                if(Validation.validateLogin(login) && Validation.validatePassword(password)) {
-//
-//                    User user = DataAccess.getUser(login);
-//                    if(user == null) {
-//                        toast = Toast.makeText(getApplicationContext(), "User doesn't exist", Toast.LENGTH_SHORT);
-//                        toast.show();
-//                    }
-//                    else if(User.loginUser(user, password)){
-//                        Intent intent = new Intent(getApplicationContext(), WalletActivity.class);
-//                        intent.putExtra("user", user);
-//                        startActivity(intent);
-//                    }
-//                    else {
-//                        toast = Toast.makeText(getApplicationContext(), "Incorrect user credentials", Toast.LENGTH_SHORT);
-//                        toast.show();
-//                    }
-//                }
+//              String login = loginInput.getText().toString();
+//              String password = passwordInput.getText().toString();
+                String login = "user1";
+                String password = "123";
+                String feedback;
+                if(Validation.validateLogin(login) && Validation.validatePassword(password)) {
 
-
+                    User user = DataAccess.getUser(login);
+                    if(user == null) {
+                        toast = Toast.makeText(getApplicationContext(), "User doesn't exist", Toast.LENGTH_SHORT);
+                        toast.show();
+                    }
+                    else if(User.loginUser(user, password)){
+                        Intent intent = new Intent(getApplicationContext(), WalletActivity.class);
+                        intent.putExtra("user", user);
+                        intent.putExtra("user_password", password);
+                        startActivity(intent);
+                    }
+                    else {
+                        displayToast("Incorrect user credentials");
+                    }
+                }
             }
         });
+    }
+
+    void displayToast(String text) {
+        Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
     }
 
 

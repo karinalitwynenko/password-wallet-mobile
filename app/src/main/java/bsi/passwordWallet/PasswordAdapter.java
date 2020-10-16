@@ -2,6 +2,7 @@ package bsi.passwordWallet;
 
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +13,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-public class PasswordAdapter extends ArrayAdapter<Password> implements View.OnClickListener {
+public class PasswordAdapter extends ArrayAdapter<Password> {
     private ArrayList<Password> dataSet;
     Context context;
 
@@ -21,23 +22,6 @@ public class PasswordAdapter extends ArrayAdapter<Password> implements View.OnCl
         this.dataSet = data;
         this.context = context;
     }
-
-    @Override
-    public void onClick(View v) {
-        int position=(Integer) v.getTag();
-        Object object= getItem(position);
-//        DataModel dataModel=(DataModel)object;
-//
-//        switch (v.getId())
-//        {
-//            case R.id.item_info:
-//                Snackbar.make(v, "Release date " +dataModel.getFeature(), Snackbar.LENGTH_LONG)
-//                        .setAction("No action", null).show();
-//                break;
-//        }
-    }
-
-    private int lastPosition = -1;
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -52,7 +36,11 @@ public class PasswordAdapter extends ArrayAdapter<Password> implements View.OnCl
         }
 
         TextView tv = convertView.findViewById(R.id.website);
-        tv.setText(password.website);
+        tv.setText(password.getWebsite());
+
+        convertView.setTag(convertView.getId(), dataSet.get(position));
+        tv = convertView.findViewById(R.id.description);
+        tv.setText(password.getDescription());
 
         // Return the completed view to render on screen
         return convertView;

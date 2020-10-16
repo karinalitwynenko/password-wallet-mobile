@@ -1,15 +1,13 @@
 package bsi.passwordWallet;
 
-import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Adapter;
-import android.widget.ExpandableListAdapter;
-import android.widget.ExpandableListView;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -19,6 +17,33 @@ public class WalletActivity extends AppCompatActivity {
     ArrayList<Password> passwords;
     PasswordAdapter passwordAdapter;
     User user;
+    byte[] userPassword;  // stored as MD5 hash
+
+    interface PasswordCreatedListener {
+        void passwordCreated(Password password);
+    }
+
+    interface PasswordDeletedListener {
+        void passwordModified(Password password);
+    }
+
+    // called by AddPasswordDialog when user creates new password
+    PasswordCreatedListener passwordCreatedListener = new PasswordCreatedListener() {
+        @Override
+        public void passwordCreated(Password password) {
+            passwords.add(password);
+            passwordAdapter.notifyDataSetChanged();
+        }
+    };
+
+    PasswordDeletedListener passwordDeletedListener = new PasswordDeletedListener() {
+        @Override
+        public void passwordModified(Password password) {
+            passwords.remove(password);
+            passwordAdapter.notifyDataSetChanged();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,44 +52,50 @@ public class WalletActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         try {
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
         } catch (NullPointerException e) {
             finish();
         }
 
         if(getIntent().getExtras() != null) {
             user = (User)getIntent().getExtras().get("user");
+            userPassword = Encryption.encryptMD5(getIntent().getExtras().getString("user_password"));
         }
+
         passwordsListView = findViewById(R.id.passwordsListView);
-
-
-        passwords = new ArrayList<>();
-        passwords.add(new Password("gamil.com"));
-        passwords.add(new Password("ga32mil.com"));
-        passwords.add(new Password("23.com"));
-        passwords.add(new Password("gamil.com"));
-        passwords.add(new Password("2eaw.com"));
-        passwords.add(new Password("pollub.com"));
-        passwords.add(new Password("xx2.com"));
+        passwords = DataAccess.getPasswords(user.getUserID());
 
         passwordAdapter = new PasswordAdapter(passwords, this);
+        passwordsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                PasswordDetailsDialog dialog =
+                        (PasswordDetailsDialog)getSupportFragmentManager().findFragmentByTag("PasswordDetails");
+                if(dialog == null) {
+                    dialog = new PasswordDetailsDialog(passwords.get(position), userPassword, passwordDeletedListener);
+                    dialog.show(getSupportFragmentManager(), "PasswordDetails");
+                }
+            }
+        });
+
         passwordsListView.setAdapter(passwordAdapter);
 
         findViewById(R.id.add_new_password).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                PasswordDetailsDialog dialog =
-                        (PasswordDetailsDialog)getSupportFragmentManager().findFragmentByTag("PasswordDetails");
-                if(dialog == null){
-                    dialog = new PasswordDetailsDialog();
-                    dialog.show(getSupportFragmentManager(), "PasswordDetails");
+                AddPasswordDialog dialog =
+                        (AddPasswordDialog)getSupportFragmentManager().findFragmentByTag("AddPassword");
+                if(dialog == null) {
+                    dialog = new AddPasswordDialog(user.getUserID(), userPassword, passwordCreatedListener);
+                    dialog.show(getSupportFragmentManager(), "AddPassword");
                 }
-
-                //DataAccess.createPassword(user.getLogin(), Encryption.encryptAES128())
-
             }
         });
-
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        DataAccess.close();
+    }
 }

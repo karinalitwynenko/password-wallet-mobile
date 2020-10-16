@@ -6,5 +6,6 @@
 
     <color name="greyish">#E3E3E3</color>
     <color name="dark_text">#323232</color>
+    <color name="disabled">#505050</color>
 
 </resources>
