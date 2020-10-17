@@ -4,15 +4,8 @@ import android.content.Context;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-
-import androidx.annotation.Nullable;
-
-import static android.content.Context.MODE_PRIVATE;
 
 class DatabaseOpenHelper extends SQLiteOpenHelper {
     Context context;
@@ -55,12 +48,4 @@ class DatabaseOpenHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { }
 
-    public SQLiteDatabase openDatabase() throws SQLException {
-        SQLiteDatabase db = SQLiteDatabase.openDatabase(
-                context.getDatabasePath(DATABASE_NAME).getPath(),
-                null,
-                SQLiteDatabase.CREATE_IF_NECESSARY
-        );
-        return db;
-    }
 }

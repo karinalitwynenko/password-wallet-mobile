@@ -6,7 +6,6 @@ class Password {
     private String login;
     private String password;
     private String iv;
-    private String encryptedPassword;
     private String website;
     private String description;
 
@@ -16,10 +15,6 @@ class Password {
 
     public long getPasswordID() {
         return passwordID;
-    }
-
-    public long getUserID() {
-        return userID;
     }
 
     public String getLogin() {
@@ -50,9 +45,5 @@ class Password {
         this.iv = iv;
         this.website = website;
         this.description = description;
-    }
-
-    Password(String website) {
-        this.website = website;
     }
 }

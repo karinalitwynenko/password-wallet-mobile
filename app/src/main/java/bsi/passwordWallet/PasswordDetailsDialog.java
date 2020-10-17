@@ -2,7 +2,6 @@ package bsi.passwordWallet;
 
 import android.os.Bundle;
 import android.text.method.PasswordTransformationMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ public class PasswordDetailsDialog extends DialogFragment {
     WalletActivity.PasswordDeletedListener passwordDeletedListener;
     Password password;
     byte[] userPassword;
+
     public PasswordDetailsDialog(Password password, byte[] userPassword, WalletActivity.PasswordDeletedListener passwordDeletedListener) {
         this.password = password;
         this.userPassword = userPassword;
@@ -53,6 +53,7 @@ public class PasswordDetailsDialog extends DialogFragment {
 
             }
         });
+
         // dismiss the dialog when the user clicks on close button (cross)
         v.findViewById(R.id.close_button).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,7 +66,7 @@ public class PasswordDetailsDialog extends DialogFragment {
             @Override
             public void onClick(View v) {
                 if(!DataAccess.deletePassword(password.getPasswordID())) {
-                    Toast.makeText(getContext(), "Could not delete the password.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Could not delete the password", Toast.LENGTH_SHORT).show();
                 }
                 else {
                     passwordDeletedListener.passwordModified(password);

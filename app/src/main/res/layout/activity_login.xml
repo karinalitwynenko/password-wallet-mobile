@@ -181,11 +181,11 @@
         app:layout_constraintTop_toBottomOf="@+id/signup_prompt">
 
         <RadioButton
-            android:id="@+id/SHA256"
+            android:id="@+id/SHA512"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:buttonTint="@android:color/white"
-            android:text="SHA256"
+            android:text="SHA-512"
             android:checked="true"
             android:textColor="@android:color/white" />
 

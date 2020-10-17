@@ -1,12 +1,14 @@
 package bsi.passwordWallet;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Objects;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,7 +19,8 @@ public class WalletActivity extends AppCompatActivity {
     ArrayList<Password> passwords;
     PasswordAdapter passwordAdapter;
     User user;
-    byte[] userPassword;  // stored as MD5 hash
+    String userPassword;
+    byte[] userPasswordHash;  // stored as MD5 hash
 
     interface PasswordCreatedListener {
         void passwordCreated(Password password);
@@ -25,6 +28,10 @@ public class WalletActivity extends AppCompatActivity {
 
     interface PasswordDeletedListener {
         void passwordModified(Password password);
+    }
+
+    interface UserPasswordModifiedListener {
+        void userPasswordModified(String newUserPassword);
     }
 
     // called by AddPasswordDialog when user creates new password
@@ -44,6 +51,28 @@ public class WalletActivity extends AppCompatActivity {
         }
     };
 
+    UserPasswordModifiedListener userPasswordModifiedListener = new UserPasswordModifiedListener() {
+        @Override
+        public void userPasswordModified(String newUserPassword) {
+            /* updating user object is not necessary */
+            byte[] newUserPasswordHash = Encryption.calculateMD5(newUserPassword);
+            if(updatePasswords(passwords, newUserPasswordHash)) {
+                // if the passwords updated successfully, update password fields
+                userPassword = newUserPassword;
+                userPasswordHash = newUserPasswordHash;
+
+                Toast.makeText(getApplicationContext(), "User's password updated successfully", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                // reload the passwords from the database
+                passwords = DataAccess.getPasswords(user.getUserID());
+                Toast.makeText(getApplicationContext(), "Failed to update user's password", Toast.LENGTH_SHORT).show();
+            }
+
+            passwordAdapter.notifyDataSetChanged();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,9 +86,13 @@ public class WalletActivity extends AppCompatActivity {
             finish();
         }
 
+        TextView userButton = findViewById(R.id.user_button);
+
         if(getIntent().getExtras() != null) {
             user = (User)getIntent().getExtras().get("user");
-            userPassword = Encryption.encryptMD5(getIntent().getExtras().getString("user_password"));
+            userPassword = getIntent().getExtras().getString("user_password");
+            userPasswordHash = Encryption.calculateMD5(userPassword);
+            userButton.setText(user.getLogin());
         }
 
         passwordsListView = findViewById(R.id.passwordsListView);
@@ -72,7 +105,7 @@ public class WalletActivity extends AppCompatActivity {
                 PasswordDetailsDialog dialog =
                         (PasswordDetailsDialog)getSupportFragmentManager().findFragmentByTag("PasswordDetails");
                 if(dialog == null) {
-                    dialog = new PasswordDetailsDialog(passwords.get(position), userPassword, passwordDeletedListener);
+                    dialog = new PasswordDetailsDialog(passwords.get(position), userPasswordHash, passwordDeletedListener);
                     dialog.show(getSupportFragmentManager(), "PasswordDetails");
                 }
             }
@@ -86,11 +119,38 @@ public class WalletActivity extends AppCompatActivity {
                 AddPasswordDialog dialog =
                         (AddPasswordDialog)getSupportFragmentManager().findFragmentByTag("AddPassword");
                 if(dialog == null) {
-                    dialog = new AddPasswordDialog(user.getUserID(), userPassword, passwordCreatedListener);
+                    dialog = new AddPasswordDialog(user.getUserID(), userPasswordHash, passwordCreatedListener);
                     dialog.show(getSupportFragmentManager(), "AddPassword");
                 }
             }
         });
+
+        userButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                UserAccountDialog dialog =
+                        (UserAccountDialog)getSupportFragmentManager().findFragmentByTag("UserAccount");
+                if(dialog == null) {
+                    dialog = new UserAccountDialog(user, userPassword, userPasswordModifiedListener);
+                    dialog.show(getSupportFragmentManager(), "UserAccount");
+                }
+            }
+        });
+    }
+
+    boolean updatePasswords(ArrayList<Password> passwords, byte[] newUserPasswordHash) {
+        // this should cause the rollback
+        passwords.add(new Password(100, 1, "3223", "3223", "3223",  "322323", "3223"));
+
+        String decryptedPassword;
+        for (Password p : passwords) {
+            // decrypt the password using previous user's key
+            decryptedPassword = Encryption.decryptAES128(p.getPassword(), userPasswordHash, Base64.getDecoder().decode(p.getIV()));
+            // encrypt the password using new user's key
+            p.setPassword(Encryption.encryptAES128(decryptedPassword, newUserPasswordHash, Base64.getDecoder().decode(p.getIV())));
+        }
+
+        return DataAccess.updatePasswords(passwords);
     }
 
 }

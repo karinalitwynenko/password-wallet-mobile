@@ -1,15 +1,14 @@
 package bsi.passwordWallet;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.method.PasswordTransformationMethod;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 public class LoginActivity extends AppCompatActivity {
     @Override
@@ -17,7 +16,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        /** bind views */
+        /* bind views */
         final EditText loginInput = findViewById(R.id.login_input);
         final EditText passwordInput = findViewById(R.id.password_input);
         final RadioGroup encryptionRadioGroup = findViewById(R.id.encryption_group);
@@ -25,9 +24,10 @@ public class LoginActivity extends AppCompatActivity {
         // obscure the password input
         passwordInput.setTransformationMethod(new PasswordTransformationMethod());
 
-        //deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
+        // uncomment this line for quick database deletion
+        // deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
 
-        /** Make first call to the database. Create the database and tables if necessary. */
+        /* Make first call to the database. Create the database and tables if necessary. */
         DataAccess.initialize(this);
 
         findViewById(R.id.signup_button).setOnClickListener(new View.OnClickListener() {
@@ -60,20 +60,18 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 // generate random salt
-                String salt = Encryption.generateSalt();
+                String salt = Encryption.generateSalt64();
                 String encryptionMethod;
                 String passwordHash;
 
-                // TODO: pepper
-
                 // generate hash for chosen encryption method
-                if(encryptionRadioGroup.getCheckedRadioButtonId() == R.id.SHA256) {
-                    encryptionMethod = Encryption.SHA256;
-                    passwordHash = Encryption.calculateSHA265(password, salt, null);
+                if(encryptionRadioGroup.getCheckedRadioButtonId() == R.id.SHA512) {
+                    encryptionMethod = Encryption.SHA512;
+                    passwordHash = Encryption.calculate512(password, salt, Encryption.PEPPER);
                 }
                 else {
                     encryptionMethod = Encryption.HMAC;
-                    passwordHash = Encryption.calculateHMAC(password, salt, null);
+                    passwordHash = Encryption.calculateHMAC(password, salt, Encryption.PEPPER);
                 }
 
                 // create a user
@@ -95,7 +93,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(View v) {
               String login = loginInput.getText().toString();
               String password = passwordInput.getText().toString();
-//                String login = "user1";
+//                String login = "user2";
 //                String password = "123";
 
                 String message = Validation.validateLogin(login);
@@ -122,10 +120,10 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 String hash;
-                if(user.getEncryptionMethod().equals(Encryption.SHA256))
-                    hash = Encryption.calculateSHA265(password, user.getSalt(), null);
+                if(user.getEncryptionMethod().equals(Encryption.SHA512))
+                    hash = Encryption.calculate512(password, user.getSalt(), Encryption.PEPPER);
                 else
-                    hash = Encryption.calculateHMAC(password, user.getSalt(), null);
+                    hash = Encryption.calculateHMAC(password, user.getSalt(), Encryption.PEPPER);
 
                 // check if provided password is valid
                 if(hash.equals(user.getPassword())) {

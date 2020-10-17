@@ -1,43 +1,33 @@
 package bsi.passwordWallet;
 
-import android.os.Build;
-
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.Random;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import androidx.annotation.RequiresApi;
-
 class Encryption {
-    final static String SHA256 = "SHA-256";
+    final static String SHA512 = "SHA-512";
     final static String HMAC = "HMAC";
-    private static String PEPPER = "Piperaceae";
+    final static String PEPPER = "lnkhvfuuebcdjcuegjsnioahqdprjgjskqclabqmhhlneburfoenupityxlrcjgj";
 
-    static String calculateSHA265(String input, String salt, String pepper) {
+    static String calculate512(String input, String salt, String pepper) {
         String hash = "";
         try {
             // get an instance of SHA-256
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
 
             // add salt
             md.update(salt.getBytes());
+            // add pepper
+            md.update(pepper.getBytes());
+
             // calculate message digest of the input string - returns byte array
             hash = new String(md.digest(input.getBytes()), StandardCharsets.UTF_8);
 
@@ -48,14 +38,24 @@ class Encryption {
         return hash;
     }
 
-    static String calculateHMAC(String input, String key, String pepper) {
+    static String calculateHMAC(String input, String salt, String pepper) {
         String hash = "";
         try {
-            final byte[] byteKey = key.getBytes(StandardCharsets.UTF_8);
+            final byte[] byteKey = salt.getBytes(StandardCharsets.UTF_8);
             Mac sha512Hmac = Mac.getInstance("HMAC_SHA512");
+
             SecretKeySpec keySpec = new SecretKeySpec(byteKey, "HMAC_SHA512");
             sha512Hmac.init(keySpec);
-            hash = sha512Hmac.doFinal(input.getBytes(StandardCharsets.UTF_8)).toString();
+
+            // add salt
+            sha512Hmac.update(salt.getBytes());
+            // add pepper
+            sha512Hmac.update(pepper.getBytes());
+
+            hash = new String(
+                    sha512Hmac.doFinal(input.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8
+            );
+
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
@@ -73,7 +73,7 @@ class Encryption {
 
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParam);
 
-            cipherBytes = cipher.doFinal(input.getBytes("UTF-8"));
+            cipherBytes = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,8 +101,12 @@ class Encryption {
         return new String(decodedInput);
     }
 
-    /** calculates MD5 hash */
-    static byte[] encryptMD5(String input) {
+    /**
+     * calculates MD5 hash
+     * @param input string to digest
+     * @return hash in a byte array
+     */
+    static byte[] calculateMD5(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             return md.digest(input.getBytes());
@@ -111,17 +115,24 @@ class Encryption {
         }
     }
 
-    static String generateSalt() {
+    /**
+     * generates 64 bytes long random salt
+     * @return UTF-8 representation of generated salt
+     */
+    static String generateSalt64() {
         SecureRandom random = new SecureRandom();
-        byte[] salt = new byte[16];
+        byte[] salt = new byte[64];
         random.nextBytes(salt);
-        return salt.toString();
+        return new String(salt, StandardCharsets.UTF_8);
     }
 
-    /** returns random initialization vector of 16 bytes */
+    /**
+     * generates random initialization vector of 16 bytes
+     * @return iv as a byte array
+     */
     public static byte[] randomIV(){
         byte[] iv = new byte[16];
-        new Random().nextBytes(iv);
+        new SecureRandom().nextBytes(iv);
         return iv;
     }
 }

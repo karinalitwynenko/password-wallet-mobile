@@ -20,12 +20,4 @@ class Validation {
             return "Login can't be longer than " + LOGIN_MAX_LENGTH + " characters";
         else return "";
     }
-
-    static public String validateWebsite(String website) {
-        if(website.isEmpty())
-            return "Website can't be empty";
-        else if(website.length() > WEBSITE_MAX_LENGTH)
-            return "Website can't be longer than " + WEBSITE_MAX_LENGTH + " characters";
-        else return "";
-    }
 }

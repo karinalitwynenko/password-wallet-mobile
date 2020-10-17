@@ -1,16 +1,13 @@
 package bsi.passwordWallet;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.EditText;
+import android.widget.Toast;
 
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
-import java.util.Arrays;
 import java.util.Base64;
 
 import androidx.fragment.app.DialogFragment;
@@ -43,7 +40,6 @@ public class AddPasswordDialog extends DialogFragment {
 
                 byte[] randomIV = Encryption.randomIV();
 
-                //TODO; check if created
                 Password password = DataAccess.createPassword(
                         userID,
                         loginEditText.getText().toString(),
@@ -52,8 +48,14 @@ public class AddPasswordDialog extends DialogFragment {
                         websiteEditText.getText().toString(),
                         descriptionEditText.getText().toString()
                 );
-                passwordCreatedListener.passwordCreated(password);
-                dismiss();
+
+                if(password != null) {
+                    passwordCreatedListener.passwordCreated(password);
+                    dismiss();
+                }
+                else {
+                    Toast.makeText(getContext(), "Could not create new password", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
