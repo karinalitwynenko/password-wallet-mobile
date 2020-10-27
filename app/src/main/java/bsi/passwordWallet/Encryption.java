@@ -42,18 +42,18 @@ class Encryption {
         String hash = "";
         try {
             final byte[] byteKey = salt.getBytes(StandardCharsets.UTF_8);
-            Mac sha512Hmac = Mac.getInstance("HMAC_SHA512");
+            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
 
-            SecretKeySpec keySpec = new SecretKeySpec(byteKey, "HMAC_SHA512");
-            sha512Hmac.init(keySpec);
+            SecretKeySpec keySpec = new SecretKeySpec(byteKey, "HmacSHA256");
+            sha256Hmac.init(keySpec);
 
             // add salt
-            sha512Hmac.update(salt.getBytes());
+            sha256Hmac.update(salt.getBytes());
             // add pepper
-            sha512Hmac.update(pepper.getBytes());
+            sha256Hmac.update(pepper.getBytes());
 
             hash = new String(
-                    sha512Hmac.doFinal(input.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8
+                    sha256Hmac.doFinal(input.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8
             );
 
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
