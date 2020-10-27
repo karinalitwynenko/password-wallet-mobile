@@ -28,7 +28,7 @@ class Encryption {
             // add pepper
             md.update(pepper.getBytes());
 
-            // calculate message digest of the input string - returns byte array
+            // calculate message digest of the input string 
             hash = new String(md.digest(input.getBytes()), StandardCharsets.UTF_8);
 
         } catch (NoSuchAlgorithmException e) {
