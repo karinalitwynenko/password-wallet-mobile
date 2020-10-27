@@ -41,19 +41,24 @@ class Encryption {
     static String calculateHMAC(String input, String salt, String pepper) {
         String hash = "";
         try {
+            // get bytes from salt string
             final byte[] byteKey = salt.getBytes(StandardCharsets.UTF_8);
-            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
 
-            SecretKeySpec keySpec = new SecretKeySpec(byteKey, "HmacSHA256");
-            sha256Hmac.init(keySpec);
+            // get an instance of HmacSHA512
+            Mac sha512Hmac = Mac.getInstance("HmacSHA512");
+
+            // create a secret key
+            SecretKeySpec keySpec = new SecretKeySpec(byteKey, "HmacSHA512");
+            sha512Hmac.init(keySpec);
 
             // add salt
-            sha256Hmac.update(salt.getBytes());
+            sha512Hmac.update(salt.getBytes());
             // add pepper
-            sha256Hmac.update(pepper.getBytes());
+            sha512Hmac.update(pepper.getBytes());
 
+            // calculate message digest of the input string
             hash = new String(
-                    sha256Hmac.doFinal(input.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8
+                    sha512Hmac.doFinal(input.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8
             );
 
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
