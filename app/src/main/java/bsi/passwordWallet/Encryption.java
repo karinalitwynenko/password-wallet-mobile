@@ -71,32 +71,42 @@ class Encryption {
     static String encryptAES128(String input, byte[] key, byte[] iv) {
         byte[] cipherBytes = new byte[0];
         try {
+            // get an instance of AES
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7PADDING");
-            IvParameterSpec ivParam = new IvParameterSpec(iv);
 
+            // initialization vector
+            IvParameterSpec ivParam = new IvParameterSpec(iv);
+            // create secrect key
             SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
 
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParam);
 
+            // encrypt input string
             cipherBytes = cipher.doFinal(input.getBytes(StandardCharsets.UTF_8));
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        // convert to string using Base64 encoding scheme
         return Base64.getEncoder().encodeToString(cipherBytes);
     }
 
     static String decryptAES128(String input, byte[] key, byte[] iv) {
         byte[] decodedInput = new byte[0];
         try {
+            // decode a Base64 encoded string into byte array
             byte[] inputBytes = Base64.getDecoder().decode(input);
+
+            // get an instance of AES
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7PADDING");
+            // initialization vector
             IvParameterSpec ivParam = new IvParameterSpec(iv);
 
             SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
-
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParam);
+
+            // decrypt input string
             decodedInput = cipher.doFinal(inputBytes);
 
         } catch (Exception e) {
