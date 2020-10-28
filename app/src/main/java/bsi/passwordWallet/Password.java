@@ -13,6 +13,10 @@ class Password {
         this.password = password;
     }
 
+    public void setIV(String iv) {
+        this.iv = iv;
+    }
+
     public long getPasswordID() {
         return passwordID;
     }

@@ -61,12 +61,20 @@ public class WalletActivity extends AppCompatActivity {
                 userPassword = newUserPassword;
                 userPasswordHash = newUserPasswordHash;
 
-                Toast.makeText(getApplicationContext(), "User's password updated successfully", Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        getApplicationContext(),
+                        "User's password updated successfully",
+                        Toast.LENGTH_SHORT
+                ).show();
             }
             else {
                 // reload the passwords from the database
                 passwords = DataAccess.getPasswords(user.getUserID());
-                Toast.makeText(getApplicationContext(), "Failed to update user's password", Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        getApplicationContext(),
+                        "Failed to update user's password",
+                        Toast.LENGTH_SHORT
+                ).show();
             }
 
             passwordAdapter.notifyDataSetChanged();
@@ -105,7 +113,9 @@ public class WalletActivity extends AppCompatActivity {
                 PasswordDetailsDialog dialog =
                         (PasswordDetailsDialog)getSupportFragmentManager().findFragmentByTag("PasswordDetails");
                 if(dialog == null) {
-                    dialog = new PasswordDetailsDialog(passwords.get(position), userPasswordHash, passwordDeletedListener);
+                    dialog = new PasswordDetailsDialog(
+                            passwords.get(position), userPasswordHash, passwordDeletedListener
+                    );
                     dialog.show(getSupportFragmentManager(), "PasswordDetails");
                 }
             }
@@ -139,15 +149,18 @@ public class WalletActivity extends AppCompatActivity {
     }
 
     boolean updatePasswords(ArrayList<Password> passwords, byte[] newUserPasswordHash) {
-        // this should cause the rollback
-        passwords.add(new Password(100, 1, "3223", "3223", "3223",  "322323", "3223"));
-
         String decryptedPassword;
+        byte[] randomIV;
         for (Password p : passwords) {
             // decrypt the password using previous user's key
-            decryptedPassword = Encryption.decryptAES128(p.getPassword(), userPasswordHash, Base64.getDecoder().decode(p.getIV()));
+            decryptedPassword = Encryption.decryptAES128(
+                    p.getPassword(), userPasswordHash, Base64.getDecoder().decode(p.getIV())
+            );
+            // generate new initialization vector
+            randomIV = Encryption.randomIV();
             // encrypt the password using new user's key
-            p.setPassword(Encryption.encryptAES128(decryptedPassword, newUserPasswordHash, Base64.getDecoder().decode(p.getIV())));
+            p.setPassword(Encryption.encryptAES128(decryptedPassword, newUserPasswordHash, randomIV));
+            p.setIV(Base64.getEncoder().encodeToString(randomIV));
         }
 
         return DataAccess.updatePasswords(passwords);

@@ -80,7 +80,7 @@ public class UserAccountDialog extends DialogFragment {
                     else
                         newPasswordHash = Encryption.calculateHMAC(passwordInput.getText().toString(), newSalt, Encryption.PEPPER);
 
-                    if(DataAccess.updateUserPassword(user.getUserID(), newPasswordHash, newSalt)) {
+                    if(DataAccess.updateUserMasterPassword(user.getUserID(), newPasswordHash, newSalt)) {
                         // notify the WalletActivity
                         userPasswordModifiedListener.userPasswordModified(newPassword);
                         dismiss();

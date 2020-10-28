@@ -85,7 +85,7 @@ class DataAccess {
      * @param newSalt salt used to calculate password hash
      * @return true if updated successfully
      */
-    public static boolean updateUserPassword(long userID, String newPassword, String newSalt) {
+    public static boolean updateUserMasterPassword(long userID, String newPassword, String newSalt) {
         ContentValues values = new ContentValues();
         values.put(PASSWORD_HASH, newPassword);
         values.put(SALT, newSalt);
@@ -179,6 +179,7 @@ class DataAccess {
 
         for(Password p : passwords) {
             values.put(PASSWORD, p.getPassword());
+            values.put(IV, p.getIV());
             if(database.update(PASSWORD_TABLE, values, "password_id = ?",
                     new String[] {String.valueOf(p.getPasswordID())}) == 0) {
 

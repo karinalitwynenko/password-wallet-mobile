@@ -25,7 +25,7 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput.setTransformationMethod(new PasswordTransformationMethod());
 
         // uncomment this line for quick database deletion
-        deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
+        // deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
 
         /* Make first call to the database. Create the database and tables if necessary. */
         DataAccess.initialize(this);

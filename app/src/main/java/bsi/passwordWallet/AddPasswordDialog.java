@@ -8,6 +8,7 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Base64;
 
 import androidx.fragment.app.DialogFragment;
@@ -36,17 +37,44 @@ public class AddPasswordDialog extends DialogFragment {
         v.findViewById(R.id.add_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String passwordText = passwordEditText.getText().toString();
+                String newLogin = loginEditText.getText().toString();
+                String newPassword = passwordEditText.getText().toString();
+                String newWebsite = websiteEditText.getText().toString();
+                String newDescription = descriptionEditText.getText().toString();
+
+                ArrayList<String> validationResults = new ArrayList<>();
+
+                validationResults.add(Validation.validatePassword(newPassword));
+                validationResults.add(Validation.validateLogin(newLogin));
+                validationResults.add(Validation.validateWebsite(newWebsite));
+
+                int validationMessageIndex = -1;
+                for(int i = 0; i < validationResults.size(); i++) {
+                    if(!validationResults.get(i).isEmpty())
+                        validationMessageIndex = i;
+                }
+
+                // check if any validation error occurred
+                if(validationMessageIndex != -1) {
+                    // inform the user and abort password modification
+                    Toast.makeText(
+                            getContext(),
+                            validationResults.get(validationMessageIndex),
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    return;
+                }
 
                 byte[] randomIV = Encryption.randomIV();
 
                 Password password = DataAccess.createPassword(
                         userID,
-                        loginEditText.getText().toString(),
-                        Encryption.encryptAES128(passwordText, userPassword, randomIV),
+                        newLogin,
+                        Encryption.encryptAES128(newPassword, userPassword, randomIV),
                         Base64.getEncoder().encodeToString(randomIV),
-                        websiteEditText.getText().toString(),
-                        descriptionEditText.getText().toString()
+                        newWebsite,
+                        newDescription
                 );
 
                 if(password != null) {
