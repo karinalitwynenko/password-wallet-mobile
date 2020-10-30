@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimaryDark"
+    android:animateLayoutChanges="true"
     tools:context=".LoginActivity">
 
     <ImageView
@@ -38,7 +39,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="12dp"
         android:fontFamily="monospace"
         android:gravity="center"
         android:text="Please sign in"
@@ -49,68 +49,111 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/login_image" />
+        app:layout_constraintTop_toBottomOf="@+id/login_image"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/login_label"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="46dp"
+        android:layout_marginTop="24dp"
         android:ems="6"
         android:fontFamily="monospace"
         android:gravity="center"
         android:text="Login"
         android:textColor="@android:color/white"
         android:textSize="16sp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/login_input"
+        app:layout_constraintBottom_toTopOf="@+id/password_label"
         app:layout_constraintEnd_toStartOf="@+id/guideline"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/login_prompt"
+        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintVertical_chainStyle="packed" />
 
     <EditText
         android:id="@+id/password_input"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="46dp"
         android:layout_marginStart="4dp"
         android:layout_marginTop="8dp"
         android:backgroundTint="@android:color/white"
         android:ems="10"
-        android:maxLength="16"
         android:fontFamily="monospace"
         android:inputType="textPassword"
+        android:maxLength="16"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/confirm_password_input"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/guideline"
+        app:layout_constraintTop_toBottomOf="@+id/login_input" />
+
+    <EditText
+        android:id="@+id/confirm_password_input"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="46dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@android:color/white"
+        android:ems="10"
+        android:fontFamily="monospace"
+        android:inputType="textPassword"
+        android:maxLength="16"
         android:textColor="@android:color/white"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/signin_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/login_input" />
+        app:layout_constraintTop_toBottomOf="@+id/password_input" />
+
+    <TextView
+        android:id="@+id/confirm_password_label"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="46dp"
+        android:layout_marginTop="8dp"
+        android:ems="6"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="Confirm password"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toStartOf="@+id/guideline"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/password_label" />
 
     <TextView
         android:id="@+id/password_label"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="46dp"
+        android:layout_marginTop="8dp"
         android:ems="6"
         android:fontFamily="monospace"
         android:gravity="center"
         android:text="Password"
         android:textColor="@android:color/white"
         android:textSize="16sp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/password_input"
+        app:layout_constraintBottom_toTopOf="@+id/confirm_password_label"
         app:layout_constraintEnd_toStartOf="@+id/guideline"
         app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/login_label" />
 
     <EditText
         android:id="@+id/login_input"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="46dp"
         android:layout_marginStart="4dp"
+        android:layout_marginTop="24dp"
         android:backgroundTint="@android:color/white"
         android:ems="10"
-        android:maxLength="16"
         android:fontFamily="monospace"
+        android:maxLength="16"
         android:textColor="@android:color/white"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/password_input"
@@ -120,46 +163,49 @@
         app:layout_constraintTop_toBottomOf="@+id/login_prompt" />
 
     <TextView
-        android:id="@+id/signup_prompt"
-        android:layout_width="0dp"
+        android:id="@+id/prompt_label"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
         android:fontFamily="monospace"
         android:gravity="center"
-        android:text="Don't have an account?"
+        android:text="@string/do_not_have"
         android:textColor="@android:color/white"
         android:textSize="14sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/signup_button"
+        app:layout_constraintBaseline_toBaselineOf="@+id/change_action_button"
+        app:layout_constraintEnd_toStartOf="@+id/change_action_button"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/change_action_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="48dp"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="@string/sign_up"
+        android:textColor="@android:color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/signin_button" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/prompt_label" />
 
     <Button
         android:id="@+id/signin_button"
+        style="@style/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        style="@style/button"
+        android:layout_marginTop="32dp"
         android:text="Sign in"
-        app:layout_constraintBottom_toTopOf="@+id/signup_prompt"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.504"
         app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/password_input" />
-
-    <Button
-        android:id="@+id/signup_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="20dp"
-        style="@style/button"
-        android:text="Sign up"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/signup_prompt" />
+        app:layout_constraintTop_toBottomOf="@+id/confirm_password_input" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
@@ -170,23 +216,20 @@
 
     <RadioGroup
         android:id="@+id/encryption_group"
+        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="24dp"
         app:layout_constraintEnd_toStartOf="@+id/guideline"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/signup_prompt">
+        app:layout_constraintTop_toBottomOf="@+id/confirm_password_label">
 
         <RadioButton
             android:id="@+id/SHA512"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:buttonTint="@android:color/white"
-            android:text="SHA-512"
             android:checked="true"
+            android:text="SHA-512"
             android:textColor="@android:color/white" />
 
         <RadioButton

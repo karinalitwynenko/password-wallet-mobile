@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Password Wallet</string>
+
+    <string name="sign_up">Sign up</string>
+    <string name="sign_in">Sign in</string>
+
+    <string name="sign_up_underline"><u>Sign up</u></string>
+    <string name="sign_in_underline"><u>Sign in</u></string>
+
+    <string name="already_have">Already have an account?</string>
+    <string name="do_not_have">Don\'t have an account?</string>
+
 </resources>

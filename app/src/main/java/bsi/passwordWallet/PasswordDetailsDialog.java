@@ -40,7 +40,7 @@ public class PasswordDetailsDialog extends DialogFragment {
         websiteEditText.setText(password.getWebsite());
         descriptionEditText.setText(password.getDescription());
 
-        v.findViewById(R.id.reveal_button).setOnClickListener(new View.OnClickListener() {
+        v.findViewById(R.id.reveal_old_password_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // check if the password is visible

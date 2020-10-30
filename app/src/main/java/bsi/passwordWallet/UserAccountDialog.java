@@ -32,14 +32,16 @@ public class UserAccountDialog extends DialogFragment {
 
         /* bind views and populate with the data */
         final EditText loginInput = v.findViewById(R.id.login_input);
-        final EditText passwordInput = v.findViewById(R.id.password_input);
+        final EditText oldPasswordInput = v.findViewById(R.id.password_input);
+        final EditText newPasswordInput = v.findViewById(R.id.new_password_input);
+
         loginInput.setText(user.getLogin());
-        passwordInput.setText(userPassword);
 
         // obscure the password input
-        passwordInput.setTransformationMethod(new PasswordTransformationMethod());
+        oldPasswordInput.setTransformationMethod(new PasswordTransformationMethod());
+        newPasswordInput.setTransformationMethod(new PasswordTransformationMethod());
 
-        passwordInput.addTextChangedListener(new TextWatcher() {
+        oldPasswordInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 // stub
@@ -61,15 +63,37 @@ public class UserAccountDialog extends DialogFragment {
             public void onClick(View v) {
                 // check if user's password was modified
                 if(passwordModified) {
-                    String newPassword = passwordInput.getText().toString();
+                    String oldPassword = oldPasswordInput.getText().toString();
+                    String newPassword = newPasswordInput.getText().toString();
 
                     // validate password format
-                    String validationResult = Validation.validatePassword(newPassword);
+                    String validationResult = Validation.validatePassword(oldPassword);
                     if(!validationResult.equals("")) {
                         // inform the user and abort password modification
                         Toast.makeText(getContext(), validationResult, Toast.LENGTH_SHORT).show();
                         return;
                     }
+
+                    validationResult = Validation.validatePassword(newPassword);
+                    if(!validationResult.equals("")) {
+                        // inform the user and abort password modification
+                        Toast.makeText(getContext(), validationResult, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    String hash;
+                    if(user.getEncryptionMethod().equals(Encryption.SHA512))
+                        hash = Encryption.calculate512(newPassword, user.getSalt(), Encryption.PEPPER);
+                    else
+                        hash = Encryption.calculateHMAC(newPassword, user.getSalt(), Encryption.PEPPER);
+
+
+                    // check if provided password is valid
+                    if(!oldPassword.equals(userPassword)) {
+                        Toast.makeText(getContext(), "Incorrect user password", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
 
                     String newPasswordHash;
                     String newSalt = Encryption.generateSalt64();
@@ -78,7 +102,7 @@ public class UserAccountDialog extends DialogFragment {
                     if(user.getEncryptionMethod().equals(Encryption.SHA512))
                         newPasswordHash = Encryption.calculate512(newPassword, newSalt, Encryption.PEPPER);
                     else
-                        newPasswordHash = Encryption.calculateHMAC(passwordInput.getText().toString(), newSalt, Encryption.PEPPER);
+                        newPasswordHash = Encryption.calculateHMAC(newPassword, newSalt, Encryption.PEPPER);
 
                     if(DataAccess.updateUserMasterPassword(user.getUserID(), newPasswordHash, newSalt)) {
                         // notify the WalletActivity
@@ -93,22 +117,41 @@ public class UserAccountDialog extends DialogFragment {
             }
         });
 
-        v.findViewById(R.id.reveal_button).setOnClickListener(new View.OnClickListener() {
+        v.findViewById(R.id.reveal_old_password_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // save current cursor position
-                int cursorPosition = passwordInput.getSelectionStart();
+                int cursorPosition = oldPasswordInput.getSelectionStart();
 
                 // check if the password is visible
-                if(passwordInput.getTransformationMethod() == null)
+                if(oldPasswordInput.getTransformationMethod() == null)
                     // hide the password
-                    passwordInput.setTransformationMethod(new PasswordTransformationMethod());
+                    oldPasswordInput.setTransformationMethod(new PasswordTransformationMethod());
                 else
                     // display the password
-                    passwordInput.setTransformationMethod(null);
+                    oldPasswordInput.setTransformationMethod(null);
 
                 // restore cursor position
-                passwordInput.setSelection(cursorPosition);
+                oldPasswordInput.setSelection(cursorPosition);
+            }
+        });
+
+        v.findViewById(R.id.reveal_new_password_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // save current cursor position
+                int cursorPosition = newPasswordInput.getSelectionStart();
+
+                // check if the password is visible
+                if(newPasswordInput.getTransformationMethod() == null)
+                    // hide the password
+                    newPasswordInput.setTransformationMethod(new PasswordTransformationMethod());
+                else
+                    // display the password
+                    newPasswordInput.setTransformationMethod(null);
+
+                // restore cursor position
+                newPasswordInput.setSelection(cursorPosition);
             }
         });
 
