@@ -11,10 +11,10 @@ class User implements Parcelable {
     private String password;
     private String salt;
 
-    public User(long userID, String login, String encryptionType, String password, String salt) {
+    public User(long userID, String login, String encryptionMethod, String password, String salt) {
         this.userID = userID;
         this.login = login;
-        this.encryptionMethod = encryptionType;
+        this.encryptionMethod = encryptionMethod;
         this.password = password;
         this.salt = salt;
     }

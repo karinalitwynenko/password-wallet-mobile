@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -81,28 +82,28 @@ public class UserAccountDialog extends DialogFragment {
                         return;
                     }
 
-                    String hash;
-                    if(user.getEncryptionMethod().equals(Encryption.SHA512))
-                        hash = Encryption.calculate512(newPassword, user.getSalt(), Encryption.PEPPER);
-                    else
-                        hash = Encryption.calculateHMAC(newPassword, user.getSalt(), Encryption.PEPPER);
-
-
                     // check if provided password is valid
                     if(!oldPassword.equals(userPassword)) {
                         Toast.makeText(getContext(), "Incorrect user password", Toast.LENGTH_SHORT).show();
                         return;
                     }
 
+                    // check if current and new passwords are the same
+                    if(oldPassword.equals(newPassword)) {
+                        Toast.makeText(getContext(), "New password is the same as the current one.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-                    String newPasswordHash;
+                    Encryption encryption = new Encryption();
+                    String newPasswordHash, encryptionMethod;
                     String newSalt = Encryption.generateSalt64();
 
-                    // get preferred encryption method and calculate the hash
                     if(user.getEncryptionMethod().equals(Encryption.SHA512))
-                        newPasswordHash = Encryption.calculate512(newPassword, newSalt, Encryption.PEPPER);
+                        encryptionMethod = Encryption.SHA512;
                     else
-                        newPasswordHash = Encryption.calculateHMAC(newPassword, newSalt, Encryption.PEPPER);
+                        encryptionMethod = Encryption.HMAC_SHA512;
+
+                    newPasswordHash = LoginActivity.calculateHash(encryption, encryptionMethod, newPassword, newSalt);
 
                     if(DataAccess.updateUserMasterPassword(user.getUserID(), newPasswordHash, newSalt)) {
                         // notify the WalletActivity

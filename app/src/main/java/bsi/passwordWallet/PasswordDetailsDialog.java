@@ -9,7 +9,13 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import androidx.fragment.app.DialogFragment;
 
@@ -35,8 +41,15 @@ public class PasswordDetailsDialog extends DialogFragment {
         final EditText descriptionEditText = v.findViewById(R.id.description_input);
         passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
 
+        Encryption encryption = new Encryption();
+        try {
+            encryption.setCipher(new Encryption.CipherWrapper(Cipher.getInstance("AES/CBC/PKCS7PADDING")));
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+
         loginEditText.setText(password.getLogin());
-        passwordEditText.setText(Encryption.decryptAES128(password.getPassword(), userPassword, Base64.getDecoder().decode(password.getIV())));
+        passwordEditText.setText(encryption.decryptAES128(password.getPassword(), new SecretKeySpec(userPassword, "AES"),  new IvParameterSpec(Base64.getDecoder().decode(password.getIV()))));
         websiteEditText.setText(password.getWebsite());
         descriptionEditText.setText(password.getDescription());
 

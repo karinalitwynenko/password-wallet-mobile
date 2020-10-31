@@ -3,9 +3,7 @@ package bsi.passwordWallet;
 import android.content.Intent;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.text.Html;
 import android.text.method.PasswordTransformationMethod;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,8 +11,15 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.text.HtmlCompat;
 
 public class LoginActivity extends AppCompatActivity {
     EditText loginInput;
@@ -34,27 +39,20 @@ public class LoginActivity extends AppCompatActivity {
             String password = passwordInput.getText().toString();
             String confirmPassword = confirmPasswordInput.getText().toString();
 
-            User user;
+            ArrayList<String> validationResults = new ArrayList<>();
+            validationResults.add(Validation.validatePassword(confirmPassword));
+            validationResults.add(Validation.validatePassword(password));
+            validationResults.add(Validation.validateLogin(login));
 
-            String message = Validation.validateLogin(login);
-            // check if the login has invalid format
-            if(!message.isEmpty()) {
-                // inform the user and abort sign up process
-                displayToast(message);
-                return;
+            int validationMessageIndex = -1;
+            for(int i = 0; i < validationResults.size(); i++) {
+                if(!validationResults.get(i).isEmpty())
+                    validationMessageIndex = i;
             }
 
-            message = Validation.validatePassword(password);
-            // check if the password has invalid format
-            if(!message.isEmpty()) {
-                displayToast(message);
-                return;
-            }
-
-            message = Validation.validatePassword(confirmPassword);
-            // check if the password has invalid format
-            if(!message.isEmpty()) {
-                displayToast(message);
+            if(validationMessageIndex != -1) {
+                // inform the user and abort account creation
+                displayToast(validationResults.get(validationMessageIndex));
                 return;
             }
 
@@ -63,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            user = DataAccess.getUser(login);
+            User user = DataAccess.getUser(login);
             // check if provided login is already in use
             if(user != null) {
                 displayToast("Login already exists");
@@ -73,20 +71,21 @@ public class LoginActivity extends AppCompatActivity {
             // generate random salt
             String salt = Encryption.generateSalt64();
             String encryptionMethod;
-            String passwordHash;
+            String hash;
 
+            Encryption encryption = new Encryption();
             // generate hash for chosen encryption method
-            if(encryptionRadioGroup.getCheckedRadioButtonId() == R.id.SHA512) {
+            if(encryptionRadioGroup.getCheckedRadioButtonId() == R.id.SHA512)
                 encryptionMethod = Encryption.SHA512;
-                passwordHash = Encryption.calculate512(password, salt, Encryption.PEPPER);
-            }
-            else {
-                encryptionMethod = Encryption.HMAC;
-                passwordHash = Encryption.calculateHMAC(password, salt, Encryption.PEPPER);
-            }
+            else
+                encryptionMethod = Encryption.HMAC_SHA512;
+
+
+            hash = calculateHash(encryption, encryptionMethod, password, salt);
+
 
             // create a user
-            user = DataAccess.createUser(login, encryptionMethod, passwordHash, salt);
+            user = DataAccess.createUser(login, encryptionMethod, hash, salt);
 
             // check if the user was properly created
             if(user == null) {
@@ -129,10 +128,14 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             String hash;
+            Encryption encryption = new Encryption();
+            String encryptionMethod;
             if(user.getEncryptionMethod().equals(Encryption.SHA512))
-                hash = Encryption.calculate512(password, user.getSalt(), Encryption.PEPPER);
+                encryptionMethod = Encryption.SHA512;
             else
-                hash = Encryption.calculateHMAC(password, user.getSalt(), Encryption.PEPPER);
+                encryptionMethod = Encryption.HMAC_SHA512;
+
+            hash = calculateHash(encryption, encryptionMethod, password, user.getSalt());
 
             // check if provided password is valid
             if(hash.equals(user.getPassword())) {
@@ -173,7 +176,7 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput.setTransformationMethod(new PasswordTransformationMethod());
 
         // uncomment this line for quick database deletion
-        // deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
+         deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
 
         /* Make first call to the database. Create the database and tables if necessary. */
         DataAccess.initialize(this);
@@ -215,5 +218,36 @@ public class LoginActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         DataAccess.close();
+    }
+
+    boolean comparePasswords() {
+        return true;
+    }
+
+    static String calculateHash(Encryption encryption, String encryptionMethod, String input, String salt) {
+        String hash;
+        if(encryptionMethod.equals(Encryption.SHA512)) {
+            try {
+                encryption.setMessageDigest(MessageDigest.getInstance(Encryption.SHA512));
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+            hash = encryption.calculateSHA512(input, salt, Encryption.PEPPER);
+
+        }
+        else {
+            try {
+                encryption.setMac(new Encryption.MacWrapper(Mac.getInstance(Encryption.HMAC_SHA512)));
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+            hash = encryption.calculateHMAC(
+                    input,
+                    new SecretKeySpec(salt.getBytes(StandardCharsets.UTF_8), Encryption.HMAC_SHA512),
+                    Encryption.PEPPER
+            );
+        }
+
+        return hash;
     }
 }

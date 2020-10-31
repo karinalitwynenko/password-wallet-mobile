@@ -7,9 +7,16 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Objects;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -55,7 +62,15 @@ public class WalletActivity extends AppCompatActivity {
         @Override
         public void userPasswordModified(String newUserPassword) {
             /* updating user object is not necessary */
-            byte[] newUserPasswordHash = Encryption.calculateMD5(newUserPassword);
+            byte[] newUserPasswordHash = {};
+            Encryption encryption = new Encryption();
+            try {
+                encryption.setMessageDigest(MessageDigest.getInstance("MD5"));
+                newUserPasswordHash = encryption.calculateMD5(newUserPassword);
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+
             if(updatePasswords(passwords, newUserPasswordHash)) {
                 // if the passwords updated successfully, update password fields
                 userPassword = newUserPassword;
@@ -99,8 +114,14 @@ public class WalletActivity extends AppCompatActivity {
         if(getIntent().getExtras() != null) {
             user = (User)getIntent().getExtras().get("user");
             userPassword = getIntent().getExtras().getString("user_password");
-            userPasswordHash = Encryption.calculateMD5(userPassword);
-            userButton.setText(user.getLogin());
+            Encryption encryption = new Encryption();
+            try {
+                encryption.setMessageDigest(MessageDigest.getInstance("MD5"));
+                userPasswordHash = encryption.calculateMD5(userPassword);
+                userButton.setText(user.getLogin());
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
         }
 
         passwordsListView = findViewById(R.id.passwordsListView);
@@ -151,17 +172,25 @@ public class WalletActivity extends AppCompatActivity {
     boolean updatePasswords(ArrayList<Password> passwords, byte[] newUserPasswordHash) {
         String decryptedPassword;
         byte[] randomIV;
+        Encryption encryption = new Encryption();
+        try {
+            encryption.setCipher(new Encryption.CipherWrapper(Cipher.getInstance("AES/CBC/PKCS7PADDING")));
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+
         for (Password p : passwords) {
             // decrypt the password using previous user's key
-            decryptedPassword = Encryption.decryptAES128(
-                    p.getPassword(), userPasswordHash, Base64.getDecoder().decode(p.getIV())
+            decryptedPassword = encryption.decryptAES128(
+                    p.getPassword(), new SecretKeySpec(userPasswordHash, "AES"),  new IvParameterSpec(Base64.getDecoder().decode(p.getIV()))
             );
             // generate new initialization vector
             randomIV = Encryption.randomIV();
             // encrypt the password using new user's key
-            p.setPassword(Encryption.encryptAES128(decryptedPassword, newUserPasswordHash, randomIV));
+            p.setPassword(encryption.encryptAES128(decryptedPassword, new SecretKeySpec(newUserPasswordHash, "AES"), new IvParameterSpec(randomIV)));
             p.setIV(Base64.getEncoder().encodeToString(randomIV));
         }
+
 
         return DataAccess.updatePasswords(passwords);
     }

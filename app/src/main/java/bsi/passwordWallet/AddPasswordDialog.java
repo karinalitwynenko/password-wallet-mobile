@@ -8,8 +8,14 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
+
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import androidx.fragment.app.DialogFragment;
 
@@ -68,10 +74,17 @@ public class AddPasswordDialog extends DialogFragment {
 
                 byte[] randomIV = Encryption.randomIV();
 
+                Encryption encryption = new Encryption();
+                try {
+                    encryption.setCipher(new Encryption.CipherWrapper(Cipher.getInstance("AES/CBC/PKCS7PADDING")));
+                } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+                    e.printStackTrace();
+                }
+
                 Password password = DataAccess.createPassword(
                         userID,
                         newLogin,
-                        Encryption.encryptAES128(newPassword, userPassword, randomIV),
+                        encryption.encryptAES128(newPassword, new SecretKeySpec(userPassword, "AES"), new IvParameterSpec(randomIV)),
                         Base64.getEncoder().encodeToString(randomIV),
                         newWebsite,
                         newDescription
