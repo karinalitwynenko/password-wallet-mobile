@@ -5,14 +5,16 @@ import android.os.Parcelable;
 
 
 class User implements Parcelable {
-    private long userID;
+    private long id;
     private String login;
     private String encryptionMethod;
     private String password;
     private String salt;
 
-    public User(long userID, String login, String encryptionMethod, String password, String salt) {
-        this.userID = userID;
+    public User() {}
+
+    public User(long id, String login, String encryptionMethod, String password, String salt) {
+        this.id = id;
         this.login = login;
         this.encryptionMethod = encryptionMethod;
         this.password = password;
@@ -20,7 +22,7 @@ class User implements Parcelable {
     }
 
     protected User(Parcel in) {
-        userID = in.readLong();
+        id = in.readLong();
         login = in.readString();
         encryptionMethod = in.readString();
         password = in.readString();
@@ -39,8 +41,8 @@ class User implements Parcelable {
         }
     };
 
-    public long getUserID() {
-        return userID;
+    public long getId() {
+        return id;
     }
 
     public String getLogin() {
@@ -66,7 +68,7 @@ class User implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(userID);
+        dest.writeLong(id);
         dest.writeString(login);
         dest.writeString(encryptionMethod);
         dest.writeString(password);

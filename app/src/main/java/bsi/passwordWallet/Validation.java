@@ -12,7 +12,7 @@ class Validation {
     static final String WEBSITE_CANT_BE_EMPTY = "Website can't be empty";
     static final String WEBSITE_CANT_BE_LONGER_THAN = "Website can't be longer than %d characters";
 
-    static public String validatePassword(String password) {
+    public String validatePassword(String password) {
         if(password.isEmpty())
             return PASSWORD_CANT_BE_EMPTY;
         else if(password.length() > PASSWORD_MAX_LENGTH)
@@ -20,7 +20,7 @@ class Validation {
         else return "";
     }
 
-    static public String validateLogin(String login) {
+    public String validateLogin(String login) {
         if(login.isEmpty())
             return LOGIN_CANT_BE_EMPTY;
         else if(login.length() > LOGIN_MAX_LENGTH)
@@ -29,7 +29,7 @@ class Validation {
         else return "";
     }
 
-    static public String validateWebsite(String website) {
+    public String validateWebsite(String website) {
         if(website.isEmpty())
             return WEBSITE_CANT_BE_EMPTY;
         else if(website.length() > WEBSITE_MAX_LENGTH)

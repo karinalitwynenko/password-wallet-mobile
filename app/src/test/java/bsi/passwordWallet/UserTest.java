@@ -2,17 +2,17 @@ package bsi.passwordWallet;
 
 import android.os.Parcel;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.testng.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertNotNull;
 
 public class UserTest {
     User user;
 
-    @BeforeMethod
+    @Before
     public void setUp() {
         user = new User(
                 1,
@@ -33,10 +33,11 @@ public class UserTest {
     }
 
     @Test
-    public void User_WritesToParcel_WhenValidDataPassed() {
+    public void writeToParcel_WritesToParcel_WhenValidDataPassed() {
         Parcel parcel = mock(Parcel.class);
         user.writeToParcel(parcel, 0);
-        verify(parcel, times(1)).writeLong(user.getUserID());
+
+        verify(parcel, times(1)).writeLong(user.getId());
         verify(parcel, times(1)).writeString(user.getLogin());
         verify(parcel, times(1)).writeString(user.getEncryptionMethod());
         verify(parcel, times(1)).writeString(user.getPassword());

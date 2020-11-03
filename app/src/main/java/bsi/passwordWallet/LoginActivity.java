@@ -32,6 +32,37 @@ public class LoginActivity extends AppCompatActivity {
     TextView changeAction;
     TextView promptLabel;
 
+    Validation validation;
+
+    void setValidation(Validation validation) {
+        this.validation = validation;
+    }
+
+    View.OnClickListener changeActionListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int visibility;
+            if(((TextView)v).getText().toString().equals(getString(R.string.sign_in))) {
+                visibility = View.GONE;
+                changeAction.setText(getString(R.string.sign_up));
+                promptLabel.setText(getString(R.string.do_not_have));
+                signInButton.setText(R.string.sign_in);
+                signInButton.setOnClickListener(signInListener);
+            }
+            else {
+                visibility = View.VISIBLE;
+                changeAction.setText(getString(R.string.sign_in));
+                promptLabel.setText(getString(R.string.already_have));
+                signInButton.setText(R.string.sign_up);
+                signInButton.setOnClickListener(signUpListener);
+            }
+
+            confirmPasswordLabel.setVisibility(visibility);
+            confirmPasswordInput.setVisibility(visibility);
+            encryptionRadioGroup.setVisibility(visibility);
+        }
+    };
+
     View.OnClickListener signUpListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -40,9 +71,9 @@ public class LoginActivity extends AppCompatActivity {
             String confirmPassword = confirmPasswordInput.getText().toString();
 
             ArrayList<String> validationResults = new ArrayList<>();
-            validationResults.add(Validation.validatePassword(confirmPassword));
-            validationResults.add(Validation.validatePassword(password));
-            validationResults.add(Validation.validateLogin(login));
+            validationResults.add(validation.validatePassword(confirmPassword));
+            validationResults.add(validation.validatePassword(password));
+            validationResults.add(validation.validateLogin(login));
 
             int validationMessageIndex = -1;
             for(int i = 0; i < validationResults.size(); i++) {
@@ -61,19 +92,19 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            User user = DataAccess.getUser(login);
+            User user = new DataAccess().getUser(login);
             // check if provided login is already in use
             if(user != null) {
                 displayToast("Login already exists");
                 return;
             }
+            Encryption encryption = new Encryption();
 
             // generate random salt
-            String salt = Encryption.generateSalt64();
+            String salt = encryption.generateSalt64();
             String encryptionMethod;
             String hash;
 
-            Encryption encryption = new Encryption();
             // generate hash for chosen encryption method
             if(encryptionRadioGroup.getCheckedRadioButtonId() == R.id.SHA512)
                 encryptionMethod = Encryption.SHA512;
@@ -81,11 +112,11 @@ public class LoginActivity extends AppCompatActivity {
                 encryptionMethod = Encryption.HMAC_SHA512;
 
 
-            hash = calculateHash(encryption, encryptionMethod, password, salt);
+            hash = new UserService().calculateHash(encryptionMethod, password, salt);
 
 
             // create a user
-            user = DataAccess.createUser(login, encryptionMethod, hash, salt);
+            user = new DataAccess().createUser(login, encryptionMethod, hash, salt);
 
             // check if the user was properly created
             if(user == null) {
@@ -104,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
             String login = loginInput.getText().toString();
             String password = passwordInput.getText().toString();
 
-            String message = Validation.validateLogin(login);
+            String message = validation.validateLogin(login);
             // check if the login has invalid format
             if(!message.isEmpty()) {
                 // inform the user and abort sign up process
@@ -112,7 +143,7 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            message = Validation.validatePassword(password);
+            message = validation.validatePassword(password);
             // check if the password has invalid format
             if(!message.isEmpty()) {
                 displayToast(message);
@@ -120,7 +151,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             // try to get user with provided login
-            User user = DataAccess.getUser(login);
+            User user = new DataAccess().getUser(login);
             // check if the user was found
             if(user == null) {
                 displayToast("User doesn't exist"); // inform user and abort sign in process
@@ -128,14 +159,13 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             String hash;
-            Encryption encryption = new Encryption();
             String encryptionMethod;
             if(user.getEncryptionMethod().equals(Encryption.SHA512))
                 encryptionMethod = Encryption.SHA512;
             else
                 encryptionMethod = Encryption.HMAC_SHA512;
 
-            hash = calculateHash(encryption, encryptionMethod, password, user.getSalt());
+            hash = new UserService().calculateHash(encryptionMethod, password, user.getSalt());
 
             // check if provided password is valid
             if(hash.equals(user.getPassword())) {
@@ -176,38 +206,15 @@ public class LoginActivity extends AppCompatActivity {
         passwordInput.setTransformationMethod(new PasswordTransformationMethod());
 
         // uncomment this line for quick database deletion
-         deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
+        //deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
 
         /* Make first call to the database. Create the database and tables if necessary. */
-        DataAccess.initialize(this);
+        DataAccess.initialize(new DatabaseOpenHelper(this).getWritableDatabase());
+
+        setValidation(new Validation());
 
         signInButton.setOnClickListener(signInListener);
-
-        findViewById(R.id.change_action_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int visibility;
-                if(((TextView)v).getText().toString().equals(getString(R.string.sign_in))) {
-                    visibility = View.GONE;
-                    changeAction.setText(getString(R.string.sign_up));
-                    promptLabel.setText(getString(R.string.do_not_have));
-                    signInButton.setText(R.string.sign_in);
-                    signInButton.setOnClickListener(signInListener);
-                }
-                else {
-                    visibility = View.VISIBLE;
-                    changeAction.setText(getString(R.string.sign_in));
-                    promptLabel.setText(getString(R.string.already_have));
-                    signInButton.setText(R.string.sign_up);
-                    signInButton.setOnClickListener(signUpListener);
-                }
-
-                confirmPasswordLabel.setVisibility(visibility);
-                confirmPasswordInput.setVisibility(visibility);
-                encryptionRadioGroup.setVisibility(visibility);
-            }
-        });
-
+        changeAction.setOnClickListener(changeActionListener);
     }
 
     public void displayToast(String text) {
@@ -220,34 +227,4 @@ public class LoginActivity extends AppCompatActivity {
         DataAccess.close();
     }
 
-    boolean comparePasswords() {
-        return true;
-    }
-
-    static String calculateHash(Encryption encryption, String encryptionMethod, String input, String salt) {
-        String hash;
-        if(encryptionMethod.equals(Encryption.SHA512)) {
-            try {
-                encryption.setMessageDigest(MessageDigest.getInstance(Encryption.SHA512));
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-            hash = encryption.calculateSHA512(input, salt, Encryption.PEPPER);
-
-        }
-        else {
-            try {
-                encryption.setMac(new Encryption.MacWrapper(Mac.getInstance(Encryption.HMAC_SHA512)));
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-            hash = encryption.calculateHMAC(
-                    input,
-                    new SecretKeySpec(salt.getBytes(StandardCharsets.UTF_8), Encryption.HMAC_SHA512),
-                    Encryption.PEPPER
-            );
-        }
-
-        return hash;
-    }
 }

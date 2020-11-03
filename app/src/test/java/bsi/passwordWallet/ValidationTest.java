@@ -1,15 +1,21 @@
 package bsi.passwordWallet;
 
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
 
 public class ValidationTest {
+    Validation validation;
+    @BeforeMethod
+    public void setUp() {
+        validation = new Validation();
+    }
 
     @Test
     public void validatePassword_ReturnsWarning_IfPasswordIsEmpty() {
-        String message = Validation.validatePassword("");
+        String message = validation.validatePassword("");
         assertEquals(message, Validation.PASSWORD_CANT_BE_EMPTY);
     }
 
@@ -20,7 +26,7 @@ public class ValidationTest {
 
     @Test(dataProvider = "validatePasswordValidPasswords")
     public void validatePassword_ReturnsNoWarning_IfPasswordIsValid(String password, String expMessage) {
-        assertEquals(Validation.validatePassword(password), expMessage);
+        assertEquals(validation.validatePassword(password), expMessage);
     }
 
     @DataProvider(name = "validatePasswordTooLongPasswords")
@@ -34,12 +40,12 @@ public class ValidationTest {
 
     @Test(dataProvider = "validatePasswordTooLongPasswords")
     public void validatePassword_ReturnsWarning_IfPasswordTooLong(String password, String expMessage) {
-        assertEquals(Validation.validatePassword(password), expMessage);
+        assertEquals(validation.validatePassword(password), expMessage);
     }
 
     @Test
     public void validateLogin_ReturnsWarning_IfLoginIsEmpty() {
-        assertEquals(Validation.validateLogin(""), Validation.LOGIN_CANT_BE_EMPTY);
+        assertEquals(validation.validateLogin(""), Validation.LOGIN_CANT_BE_EMPTY);
     }
 
     @DataProvider(name = "validateLoginValidLogins")
@@ -49,7 +55,7 @@ public class ValidationTest {
 
     @Test(dataProvider = "validateLoginValidLogins")
     public void validateLogin_ReturnsNoWarning_IfLoginIsValid(String login, String expMessage) {
-        assertEquals(Validation.validateLogin(login), expMessage);
+        assertEquals(validation.validateLogin(login), expMessage);
     }
 
     @DataProvider(name = "validateLoginTooLongLogins")
@@ -64,12 +70,12 @@ public class ValidationTest {
 
     @Test(dataProvider = "validateLoginTooLongLogins")
     public void validateLogin_ReturnsWarning_IfLoginTooLong(String login, String expMessage) {
-        assertEquals(Validation.validateLogin(login), expMessage);
+        assertEquals(validation.validateLogin(login), expMessage);
     }
 
     @Test
     public void validateWebsite_ReturnsWarning_IfWebsiteIsEmpty() {
-        assertEquals(Validation.validateWebsite(""), Validation.WEBSITE_CANT_BE_EMPTY);
+        assertEquals(validation.validateWebsite(""), Validation.WEBSITE_CANT_BE_EMPTY);
     }
 
     @DataProvider(name = "validateWebsiteValidWebsites")
@@ -82,7 +88,7 @@ public class ValidationTest {
 
     @Test(dataProvider = "validateLoginValidLogins")
     public void validateWebsite_ReturnsNoWarning_IfWebsiteIsValid(String website, String expMessage) {
-        assertEquals(Validation.validateWebsite(website), expMessage);
+        assertEquals(validation.validateWebsite(website), expMessage);
     }
 
     @DataProvider(name = "validateWebsiteTooLongWebsites")
@@ -97,7 +103,7 @@ public class ValidationTest {
 
     @Test(dataProvider = "validateWebsiteTooLongWebsites")
     public void validateWebsite_ReturnsWarning_IfWebsiteTooLong(String website, String expMessage) {
-        assertEquals(Validation.validateWebsite(website), expMessage);
+        assertEquals(validation.validateWebsite(website), expMessage);
     }
 
 }

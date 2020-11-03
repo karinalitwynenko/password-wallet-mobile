@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,10 +18,18 @@ public class UserAccountDialog extends DialogFragment {
     User user;
     String userPassword;
     boolean passwordModified = false;
+
+    Validation validation;
+
+    void setValidation(Validation validation) {
+        this.validation = validation;
+    }
+
     public UserAccountDialog(User user, String userPassword, WalletActivity.UserPasswordModifiedListener userPasswordModifiedListener) {
         this.user = user;
         this.userPassword = userPassword;
         this.userPasswordModifiedListener = userPasswordModifiedListener;
+        setValidation(new Validation());
     }
 
     @Override
@@ -67,54 +74,19 @@ public class UserAccountDialog extends DialogFragment {
                     String oldPassword = oldPasswordInput.getText().toString();
                     String newPassword = newPasswordInput.getText().toString();
 
-                    // validate password format
-                    String validationResult = Validation.validatePassword(oldPassword);
-                    if(!validationResult.equals("")) {
-                        // inform the user and abort password modification
-                        Toast.makeText(getContext(), validationResult, Toast.LENGTH_SHORT).show();
-                        return;
+                    String newMasterPassword = null;
+                    try {
+                        newMasterPassword = new UserService().updatePassword(user, oldPassword, newPassword, userPassword);
+                    } catch (UserService.UserAccountException e) {
+                        Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                     }
 
-                    validationResult = Validation.validatePassword(newPassword);
-                    if(!validationResult.equals("")) {
-                        // inform the user and abort password modification
-                        Toast.makeText(getContext(), validationResult, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    // check if provided password is valid
-                    if(!oldPassword.equals(userPassword)) {
-                        Toast.makeText(getContext(), "Incorrect user password", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    // check if current and new passwords are the same
-                    if(oldPassword.equals(newPassword)) {
-                        Toast.makeText(getContext(), "New password is the same as the current one.", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-
-                    Encryption encryption = new Encryption();
-                    String newPasswordHash, encryptionMethod;
-                    String newSalt = Encryption.generateSalt64();
-
-                    if(user.getEncryptionMethod().equals(Encryption.SHA512))
-                        encryptionMethod = Encryption.SHA512;
-                    else
-                        encryptionMethod = Encryption.HMAC_SHA512;
-
-                    newPasswordHash = LoginActivity.calculateHash(encryption, encryptionMethod, newPassword, newSalt);
-
-                    if(DataAccess.updateUserMasterPassword(user.getUserID(), newPasswordHash, newSalt)) {
-                        // notify the WalletActivity
-                        userPasswordModifiedListener.userPasswordModified(newPassword);
+                    if(newMasterPassword != null) {
+                        userPasswordModifiedListener.userPasswordModified(newMasterPassword);
                         dismiss();
                     }
-                    else // if any error occurred
-                         // notify the user
-                        Toast.makeText(getContext(), "Could not change user's password", Toast.LENGTH_SHORT).show();
-                }
 
+                }
             }
         });
 

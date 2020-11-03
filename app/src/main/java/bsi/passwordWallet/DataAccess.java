@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import java.util.ArrayList;
 
 class DataAccess {
-    static SQLiteDatabase database;
+    private static SQLiteDatabase database;
 
     /** database table names */
     static final String USER_TABLE = "users";
@@ -26,16 +26,22 @@ class DataAccess {
     static final String PASSWORD = "password";
     static final String IV = "iv";
 
-    public static void initialize(Context context) {
-        database = new DatabaseOpenHelper(context).getWritableDatabase();
+    private ContentValues contentValues = new ContentValues();
+
+    public static void initialize(SQLiteDatabase database) {
+        DataAccess.database = database;
+    }
+
+    public void setContentValues(ContentValues contentValues) {
+        this.contentValues = contentValues;
     }
 
     /**
-     * Retrieves user with specified login
+     * Retrieve user with specified login
      * @param login unique login
      * @return instance of User if login exists, null otherwise
      */
-    public static User getUser(String login) {
+    public User getUser(String login) {
         Cursor cursor = database.rawQuery("select * from " + USER_TABLE + " where login = ?", new String[] {login});
         // check if user with specified login exists
         if(cursor.getCount() == 0)
@@ -54,44 +60,41 @@ class DataAccess {
     }
 
     /**
-     * Creates new user
+     * Create new user
      * @param login unique user login
      * @param encryptionMethod method for hash calculation
      * @param passwordHash password hash
      * @param salt salt used to calculate password hash
      * @return instance of User if created successfully, null otherwise
      */
-    public static User createUser(String login, String encryptionMethod, String passwordHash, String salt) {
-        ContentValues values = new ContentValues();
-        values.put(LOGIN, login);
-        values.put(ENCRYPTION_TYPE, encryptionMethod);
-        values.put(PASSWORD_HASH, passwordHash);
-        values.put(SALT, salt);
+    public User createUser(String login, String encryptionMethod, String passwordHash, String salt) {
+        contentValues.put(LOGIN, login);
+        contentValues.put(ENCRYPTION_TYPE, encryptionMethod);
+        contentValues.put(PASSWORD_HASH, passwordHash);
+        contentValues.put(SALT, salt);
 
-        long userID = database.insert(USER_TABLE, null, values);
+        long userID = database.insert(USER_TABLE, null, contentValues);
 
         // if the row was successfully inserted
-        if(userID != -1) {
+        if(userID != -1)
             return new User(userID, login, encryptionMethod, passwordHash, salt);
-        }
         else
             return null;
     }
 
     /**
-     * Updates password hash and salt for user's account
+     * Update password hash and salt for user's account
      * @param userID id of user for whom account's password should be updated
      * @param newPassword hash of the new password
      * @param newSalt salt used to calculate password hash
      * @return true if updated successfully
      */
-    public static boolean updateUserMasterPassword(long userID, String newPassword, String newSalt) {
-        ContentValues values = new ContentValues();
-        values.put(PASSWORD_HASH, newPassword);
-        values.put(SALT, newSalt);
+    public boolean updateUserMasterPassword(long userID, String newPassword, String newSalt) {
+        contentValues.put(PASSWORD_HASH, newPassword);
+        contentValues.put(SALT, newSalt);
 
         database.beginTransaction();
-        if(database.update(USER_TABLE, values, "user_id = ?", new String[] {String.valueOf(userID)}) > 0)
+        if(database.update(USER_TABLE, contentValues, "user_id = ?", new String[] {String.valueOf(userID)}) > 0)
             return true;
         else {
             database.endTransaction(); // rollback
@@ -130,7 +133,6 @@ class DataAccess {
     }
 
     /**
-     *
      * @param userID id of user for whom password should be created
      * @param login login to the website
      * @param password encrypted password
@@ -139,16 +141,15 @@ class DataAccess {
      * @param description item description
      * @return new Password instance if created successfully, null if failed
      */
-    public static Password createPassword(long userID, String login, String password, String iv, String website, String description) {
-        ContentValues values = new ContentValues();
-        values.put(USER_ID, userID);
-        values.put(LOGIN, login);
-        values.put(PASSWORD, password);
-        values.put(IV, iv);
-        values.put(WEBSITE, website);
-        values.put(DESCRIPTION, description);
+    public Password createPassword(long userID, String login, String password, String iv, String website, String description) {
+        contentValues.put(USER_ID, userID);
+        contentValues.put(LOGIN, login);
+        contentValues.put(PASSWORD, password);
+        contentValues.put(IV, iv);
+        contentValues.put(WEBSITE, website);
+        contentValues.put(DESCRIPTION, description);
 
-        long passwordID = database.insert(PASSWORD_TABLE, null, values);
+        long passwordID = database.insert(PASSWORD_TABLE, null, contentValues);
         // check if the row was successfully inserted
         if(passwordID != -1)
             return new Password(passwordID, userID, login, password, iv, website, description);
@@ -161,7 +162,7 @@ class DataAccess {
      * @param passwordID id of password that should be deleted
      * @return true if password deleted successfully
      */
-    public static boolean deletePassword(long passwordID) {
+    public boolean deletePassword(long passwordID) {
         return database.delete(
                 PASSWORD_TABLE, "password_id = ?", new String[] {String.valueOf(passwordID)}
                 ) > 0;
@@ -169,18 +170,17 @@ class DataAccess {
 
 
     /**
-     * Updates encrypted password.
+     * Update encrypted password.
      * Begin transaction before calling this method.
      * @param passwords ArrayList of Password objects
      * @return true if passwords updated successfully
      */
-    public static boolean updatePasswords(ArrayList<Password> passwords) {
-        ContentValues values = new ContentValues();
+    public boolean updatePasswords(ArrayList<Password> passwords) {
 
         for(Password p : passwords) {
-            values.put(PASSWORD, p.getPassword());
-            values.put(IV, p.getIV());
-            if(database.update(PASSWORD_TABLE, values, "password_id = ?",
+            contentValues.put(PASSWORD, p.getPassword());
+            contentValues.put(IV, p.getIV());
+            if(database.update(PASSWORD_TABLE, contentValues, "password_id = ?",
                     new String[] {String.valueOf(p.getPasswordID())}) == 0) {
 
                 // rollback

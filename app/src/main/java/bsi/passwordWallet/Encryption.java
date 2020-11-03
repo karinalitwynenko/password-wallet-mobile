@@ -153,7 +153,7 @@ class Encryption {
      * generate 64 bytes long random salt
      * @return UTF-8 representation of generated salt
      */
-    static String generateSalt64() {
+    public String generateSalt64() {
         byte[] salt = new byte[64];
         new SecureRandom().nextBytes(salt);
         return new String(salt, StandardCharsets.UTF_8);
@@ -163,7 +163,7 @@ class Encryption {
      * generate random initialization vector of 16 bytes
      * @return iv as a byte array
      */
-    public static byte[] randomIV() {
+    public byte[] randomIV() {
         byte[] iv = new byte[16];
         new SecureRandom().nextBytes(iv);
         return iv;

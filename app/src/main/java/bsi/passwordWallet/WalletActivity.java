@@ -71,20 +71,20 @@ public class WalletActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            if(updatePasswords(passwords, newUserPasswordHash)) {
+            if(new PasswordService().updatePasswords(passwords, userPasswordHash, newUserPasswordHash)) {
                 // if the passwords updated successfully, update password fields
                 userPassword = newUserPassword;
                 userPasswordHash = newUserPasswordHash;
 
                 Toast.makeText(
                         getApplicationContext(),
-                        "User's password updated successfully",
+                        "User's password updated",
                         Toast.LENGTH_SHORT
                 ).show();
             }
             else {
                 // reload the passwords from the database
-                passwords = DataAccess.getPasswords(user.getUserID());
+                passwords = DataAccess.getPasswords(user.getId());
                 Toast.makeText(
                         getApplicationContext(),
                         "Failed to update user's password",
@@ -125,7 +125,7 @@ public class WalletActivity extends AppCompatActivity {
         }
 
         passwordsListView = findViewById(R.id.passwordsListView);
-        passwords = DataAccess.getPasswords(user.getUserID());
+        passwords = DataAccess.getPasswords(user.getId());
 
         passwordAdapter = new PasswordAdapter(passwords, this);
         passwordsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -150,7 +150,7 @@ public class WalletActivity extends AppCompatActivity {
                 AddPasswordDialog dialog =
                         (AddPasswordDialog)getSupportFragmentManager().findFragmentByTag("AddPassword");
                 if(dialog == null) {
-                    dialog = new AddPasswordDialog(user.getUserID(), userPasswordHash, passwordCreatedListener);
+                    dialog = new AddPasswordDialog(user, userPasswordHash, passwordCreatedListener);
                     dialog.show(getSupportFragmentManager(), "AddPassword");
                 }
             }
@@ -168,31 +168,4 @@ public class WalletActivity extends AppCompatActivity {
             }
         });
     }
-
-    boolean updatePasswords(ArrayList<Password> passwords, byte[] newUserPasswordHash) {
-        String decryptedPassword;
-        byte[] randomIV;
-        Encryption encryption = new Encryption();
-        try {
-            encryption.setCipher(new Encryption.CipherWrapper(Cipher.getInstance("AES/CBC/PKCS7PADDING")));
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            e.printStackTrace();
-        }
-
-        for (Password p : passwords) {
-            // decrypt the password using previous user's key
-            decryptedPassword = encryption.decryptAES128(
-                    p.getPassword(), new SecretKeySpec(userPasswordHash, "AES"),  new IvParameterSpec(Base64.getDecoder().decode(p.getIV()))
-            );
-            // generate new initialization vector
-            randomIV = Encryption.randomIV();
-            // encrypt the password using new user's key
-            p.setPassword(encryption.encryptAES128(decryptedPassword, new SecretKeySpec(newUserPasswordHash, "AES"), new IvParameterSpec(randomIV)));
-            p.setIV(Base64.getEncoder().encodeToString(randomIV));
-        }
-
-
-        return DataAccess.updatePasswords(passwords);
-    }
-
 }

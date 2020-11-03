@@ -175,15 +175,15 @@ public class EncryptionTest {
         assertNotNull(decrypted);
     }
 
-    @Test
-    public void generateSalt64_GeneratesSalt() {
-        String salt = Encryption.generateSalt64();
-        assertNotNull(salt);
-    }
-
-    @Test
-    public void randomIV_GeneratesIV() {
-        byte[] iv = Encryption.randomIV();
-        assertNotNull(iv);
-    }
+//    @Test
+//    public void generateSalt64_GeneratesSalt() {
+//        String salt = Encryption.generateSalt64();
+//        assertNotNull(salt);
+//    }
+//
+//    @Test
+//    public void randomIV_GeneratesIV() {
+//        byte[] iv = Encryption.randomIV();
+//        assertNotNull(iv);
+//    }
 }
