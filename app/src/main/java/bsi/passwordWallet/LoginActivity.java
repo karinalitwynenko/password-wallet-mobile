@@ -11,14 +11,6 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 public class LoginActivity extends AppCompatActivity {
@@ -31,12 +23,6 @@ public class LoginActivity extends AppCompatActivity {
     RadioGroup encryptionRadioGroup;
     TextView changeAction;
     TextView promptLabel;
-
-    Validation validation;
-
-    void setValidation(Validation validation) {
-        this.validation = validation;
-    }
 
     View.OnClickListener changeActionListener = new View.OnClickListener() {
         @Override
@@ -66,65 +52,34 @@ public class LoginActivity extends AppCompatActivity {
     View.OnClickListener signUpListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            String login = loginInput.getText().toString();
-            String password = passwordInput.getText().toString();
-            String confirmPassword = confirmPasswordInput.getText().toString();
-
-            ArrayList<String> validationResults = new ArrayList<>();
-            validationResults.add(validation.validatePassword(confirmPassword));
-            validationResults.add(validation.validatePassword(password));
-            validationResults.add(validation.validateLogin(login));
-
-            int validationMessageIndex = -1;
-            for(int i = 0; i < validationResults.size(); i++) {
-                if(!validationResults.get(i).isEmpty())
-                    validationMessageIndex = i;
-            }
-
-            if(validationMessageIndex != -1) {
-                // inform the user and abort account creation
-                displayToast(validationResults.get(validationMessageIndex));
-                return;
-            }
-
-            if(!password.equals(confirmPassword)) {
-                displayToast("Passwords don't match");
-                return;
-            }
-
-            User user = new DataAccess().getUser(login);
-            // check if provided login is already in use
-            if(user != null) {
-                displayToast("Login already exists");
-                return;
-            }
-            Encryption encryption = new Encryption();
-
-            // generate random salt
-            String salt = encryption.generateSalt64();
             String encryptionMethod;
-            String hash;
 
-            // generate hash for chosen encryption method
             if(encryptionRadioGroup.getCheckedRadioButtonId() == R.id.SHA512)
                 encryptionMethod = Encryption.SHA512;
             else
                 encryptionMethod = Encryption.HMAC_SHA512;
 
+            User user = null;
 
-            hash = new UserService().calculateHash(encryptionMethod, password, salt);
-
-
-            // create a user
-            user = new DataAccess().createUser(login, encryptionMethod, hash, salt);
-
-            // check if the user was properly created
-            if(user == null) {
-                displayToast("Couldn't create user's account");
+            try {
+                user = new UserService().signUp(
+                        loginInput.getText().toString(),
+                        passwordInput.getText().toString(),
+                        confirmPasswordInput.getText().toString(),
+                        encryptionMethod
+                );
+            } catch (UserService.UserAccountException e) {
+                displayToast(e.getMessage());
+                e.printStackTrace();
                 return;
             }
 
-            // call method for signing in
+            // check if the user was properly created
+            if(user != null)
+                // call the method for signing in
+                signInListener.onClick(signInButton);
+
+            // call the method for signing in
             signInListener.onClick(signInButton);
         }
     };
@@ -132,43 +87,20 @@ public class LoginActivity extends AppCompatActivity {
     View.OnClickListener signInListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            String login = loginInput.getText().toString();
             String password = passwordInput.getText().toString();
-
-            String message = validation.validateLogin(login);
-            // check if the login has invalid format
-            if(!message.isEmpty()) {
-                // inform the user and abort sign up process
-                displayToast(message);
+            User user = null;
+            try {
+                user = new UserService().signIn(
+                        loginInput.getText().toString(),
+                        password
+                );
+            } catch (UserService.UserAccountException e) {
+                displayToast(e.getMessage());
+                e.printStackTrace();
                 return;
             }
 
-            message = validation.validatePassword(password);
-            // check if the password has invalid format
-            if(!message.isEmpty()) {
-                displayToast(message);
-                return;
-            }
-
-            // try to get user with provided login
-            User user = new DataAccess().getUser(login);
-            // check if the user was found
-            if(user == null) {
-                displayToast("User doesn't exist"); // inform user and abort sign in process
-                return;
-            }
-
-            String hash;
-            String encryptionMethod;
-            if(user.getEncryptionMethod().equals(Encryption.SHA512))
-                encryptionMethod = Encryption.SHA512;
-            else
-                encryptionMethod = Encryption.HMAC_SHA512;
-
-            hash = new UserService().calculateHash(encryptionMethod, password, user.getSalt());
-
-            // check if provided password is valid
-            if(hash.equals(user.getPassword())) {
+            if(user != null) {
                 Intent intent = new Intent(getApplicationContext(), WalletActivity.class);
                 // pass User instance to next activity
                 intent.putExtra("user", user);
@@ -176,10 +108,6 @@ public class LoginActivity extends AppCompatActivity {
                 intent.putExtra("user_password", password);
                 // go to the WalletActivity
                 startActivity(intent);
-            }
-            else {
-                // inform the user that credentials were incorrect
-                displayToast("Incorrect password");
             }
         }
     };
@@ -210,8 +138,6 @@ public class LoginActivity extends AppCompatActivity {
 
         /* Make first call to the database. Create the database and tables if necessary. */
         DataAccess.initialize(new DatabaseOpenHelper(this).getWritableDatabase());
-
-        setValidation(new Validation());
 
         signInButton.setOnClickListener(signInListener);
         changeAction.setOnClickListener(changeActionListener);

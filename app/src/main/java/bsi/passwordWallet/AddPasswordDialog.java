@@ -46,8 +46,6 @@ public class AddPasswordDialog extends DialogFragment {
                         e.getMessage(),
                         Toast.LENGTH_LONG
                 ).show();
-
-                dismiss();
                 return;
             }
 

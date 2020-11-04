@@ -1,35 +1,15 @@
 package bsi.passwordWallet;
 
-import android.util.Log;
-
-import junit.framework.TestCase;
-
-import org.junit.rules.ExpectedException;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.MessageDigest;
-import java.security.Provider;
-import java.security.SecureRandom;
-import java.security.spec.KeySpec;
-import java.util.Base64;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.Mac;
-import javax.crypto.MacSpi;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 public class EncryptionTest {
 
