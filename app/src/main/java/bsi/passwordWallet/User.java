@@ -4,7 +4,13 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 
-class User implements Parcelable {
+public class User implements Parcelable {
+    public static final String USER_ID = "user_id";
+    public static final String LOGIN = "login";
+    public static final String ENCRYPTION_TYPE = "encryption_type";
+    public static final String PASSWORD_HASH = "password_hash";
+    public static final String SALT = "salt";
+
     private long id;
     private String login;
     private String encryptionMethod;

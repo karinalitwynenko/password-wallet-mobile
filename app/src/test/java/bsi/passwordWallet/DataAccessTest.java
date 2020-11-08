@@ -52,14 +52,16 @@ public class DataAccessTest {
     }
 
     @Test
-    public void getUser_ReturnsNull_IfUserDoesNotExist() {
+    public void getUser_ReturnsNull_IfUserNotExist() {
         Cursor cursor = mock(Cursor.class);
 
         when(databaseMock.rawQuery(anyString(), any(String[].class))).thenReturn(cursor);
         when(cursor.getCount()).thenReturn(0);
-        verifyNoMoreInteractions(cursor);
 
         User user = dataAccess.getUser("testLogin");
+
+        verify(cursor).getCount();
+        verifyNoMoreInteractions(cursor);
         assertNull(user);
     }
 
@@ -72,45 +74,119 @@ public class DataAccessTest {
         when(cursor.getString(anyInt())).thenReturn("test");
 
         User user = dataAccess.getUser("testLogin");
+
+        verify(cursor).getCount();
+        verify(cursor).moveToFirst();
+
+        verify(cursor).getColumnIndex(User.USER_ID);
+        verify(cursor).getColumnIndex(User.LOGIN);
+        verify(cursor).getColumnIndex(User.ENCRYPTION_TYPE);
+        verify(cursor).getColumnIndex(User.PASSWORD_HASH);
+        verify(cursor).getColumnIndex(User.SALT);
+
         assertNotNull(user);
-        assertEquals(user.getId(), 1L);
-        assertNotNull(user.getLogin());
-        assertNotNull(user.getEncryptionMethod());
-        assertNotNull(user.getPassword());
-        assertNotNull(user.getSalt());
+        assertEquals(1L, user.getId());
+        assertEquals("test", user.getLogin());
+        assertNotNull("test", user.getEncryptionMethod());
+        assertNotNull("test", user.getPassword());
+        assertNotNull("test", user.getSalt());
     }
 
     @Test
     public void createUser_ReturnsNewUser_IfCreated() {
-        when(databaseMock.insert(DataAccess.USER_TABLE, null, contentValuesMock)).thenReturn(1L);
-        User user = dataAccess.createUser("testLogin", "", "testHash", "testSalt");
+        when(
+                databaseMock.insert(
+                        DataAccess.USER_TABLE,
+                        null,
+                        contentValuesMock
+                )
+        ).thenReturn(2L);
 
-        verify(contentValuesMock, times(4)).put(anyString(), anyString());
+        User user = dataAccess.createUser(
+                "testLogin", Encryption.HMAC_SHA512, "testHash", "testSalt"
+        );
+
+        verify(contentValuesMock).put(User.LOGIN, "testLogin");
+        verify(contentValuesMock).put(User.ENCRYPTION_TYPE, Encryption.HMAC_SHA512);
+        verify(contentValuesMock).put(User.PASSWORD_HASH, "testHash");
+        verify(contentValuesMock).put(User.SALT, "testSalt");
+        verify(databaseMock).insert(DataAccess.USER_TABLE, null, contentValuesMock);
+
         assertNotNull(user);
+        assertEquals(2L, user.getId());
+        assertEquals("testLogin", user.getLogin());
+        assertNotNull(Encryption.HMAC_SHA512, user.getEncryptionMethod());
+        assertNotNull("testHash", user.getPassword());
+        assertNotNull("testSalt", user.getSalt());
     }
 
     @Test
     public void createUser_ReturnsNull_IfUserNotCreated() {
-        when(databaseMock.insert(DataAccess.USER_TABLE, null, contentValuesMock)).thenReturn(-1L);
+        when(
+                databaseMock.insert(
+                        DataAccess.USER_TABLE,
+                        null,
+                        contentValuesMock
+                )
+        ).thenReturn(-1L);
 
-        User user = dataAccess.createUser("testLogin", "", "testHash", "testSalt");
+        User user = dataAccess.createUser(
+                "testLogin", Encryption.HMAC_SHA512, "testHash", "testSalt"
+        );
+
+        verify(contentValuesMock).put(User.LOGIN, "testLogin");
+        verify(contentValuesMock).put(User.ENCRYPTION_TYPE, Encryption.HMAC_SHA512);
+        verify(contentValuesMock).put(User.PASSWORD_HASH, "testHash");
+        verify(contentValuesMock).put(User.SALT, "testSalt");
+        verify(databaseMock).insert(DataAccess.USER_TABLE, null, contentValuesMock);
 
         assertNull(user);
     }
 
     @Test
     public void updateUserMasterPassword_ReturnsTrue_IfPasswordUpdated() {
-        when(databaseMock.update(DataAccess.USER_TABLE, contentValuesMock, "user_id = ?", new String[] {String.valueOf(1)})).thenReturn(1);
-        boolean result = dataAccess.updateUserMasterPassword(1, "testPassword", "testSalt");
+        when(
+                databaseMock.update(
+                        DataAccess.USER_TABLE,
+                        contentValuesMock,
+                        "user_id = ?",
+                        new String[] {"1"}
+                )
+        ).thenReturn(1);
 
-        verify(databaseMock, times(1)).beginTransaction();
+        boolean result =
+                dataAccess.updateUserMasterPassword(1, "testPassword", "testSalt");
+
+        verify(contentValuesMock).put(User.PASSWORD_HASH, "testPassword");
+        verify(contentValuesMock).put(User.SALT, "testSalt");
+
+        verify(databaseMock).beginTransaction();
+        verify(databaseMock)
+                .update(DataAccess.USER_TABLE, contentValuesMock, "user_id = ?", new String[] {"1"});
+
         assertTrue(result);
     }
 
     @Test
     public void updateUserMasterPassword_ReturnsFalse_IfPasswordNotUpdated() {
-        when(databaseMock.update(DataAccess.USER_TABLE, contentValuesMock, "user_id = ?", new String[] {String.valueOf(1)})).thenReturn(-1);
+        when(
+                databaseMock.update(
+                        DataAccess.USER_TABLE,
+                        contentValuesMock,
+                        "user_id = ?",
+                        new String[] {"1"}
+                )
+        ).thenReturn(-1);
+
         boolean result = dataAccess.updateUserMasterPassword(1, "testPassword", "testSalt");
+
+        verify(contentValuesMock).put(User.PASSWORD_HASH, "testPassword");
+        verify(contentValuesMock).put(User.SALT, "testSalt");
+
+        verify(databaseMock).beginTransaction();
+        verify(databaseMock)
+                .update(DataAccess.USER_TABLE, contentValuesMock, "user_id = ?", new String[] {"1"});
+
         assertFalse(result);
     }
 
@@ -118,34 +194,44 @@ public class DataAccessTest {
     public void getPasswords_ReturnsNonEmptyPasswordList_IfPasswordsExist() {
         Cursor cursor = mock(Cursor.class);
 
-        when(databaseMock.rawQuery(
-                "select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?",
-                new String[] {String.valueOf(1)}
+        when(
+                databaseMock.rawQuery(
+                        "select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?",
+                        new String[] {"1"}
                 )
         ).thenReturn(cursor);
 
         when(cursor.moveToNext()).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(cursor.getLong(anyInt())).thenReturn(1L);
+        when(cursor.getString(anyInt())).thenReturn("test");
 
-        ArrayList<Password> passwords = DataAccess.getPasswords(1);
-        verify(cursor, atLeastOnce()).getLong(anyInt());
-        verify(cursor, atLeastOnce()).getString(anyInt());
+        ArrayList<Password> passwords = dataAccess.getPasswords(1);
+        verify(cursor, times(3)).moveToNext();
+        verify(cursor, times(4)).getLong(anyInt());
+        verify(cursor, times(10)).getString(anyInt());
 
         assertEquals(2, passwords.size());
+        assertNotNull(passwords.get(0));
+        assertNotNull(passwords.get(1));
     }
 
     @Test
     public void getPasswords_ReturnsEmptyPasswordList_IfPasswordsDoNotExist() {
         Cursor cursor = mock(Cursor.class);
 
-        when(databaseMock.rawQuery(
-                "select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?",
-                new String[] {String.valueOf(1)}
+        when(
+                databaseMock.rawQuery(
+                        "select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?",
+                        new String[] {"1"}
                 )
         ).thenReturn(cursor);
 
         when(cursor.moveToNext()).thenReturn(false);
 
-        ArrayList<Password> passwords = DataAccess.getPasswords(1);
+        ArrayList<Password> passwords = dataAccess.getPasswords(1);
+        verify(cursor, times(1)).moveToNext();
+        verifyNoMoreInteractions(cursor);
+        assertNotNull(passwords);
         assertEquals(0, passwords.size());
     }
 
@@ -187,16 +273,26 @@ public class DataAccessTest {
 
     @Test
     public void deletePassword_ReturnsTrue_IfPasswordDeleted() {
-        when(databaseMock.delete(DataAccess.PASSWORD_TABLE,"password_id = ?", new String[] {String.valueOf(1L)}))
-                .thenReturn(1);
+        when(
+                databaseMock.delete(
+                        DataAccess.PASSWORD_TABLE,
+                        "password_id = ?",
+                        new String[] {String.valueOf(1L)}
+                )
+        ).thenReturn(1);
 
         assertTrue(dataAccess.deletePassword(1));
     }
 
     @Test
     public void deletePassword_ReturnsFalse_IfPasswordNotDeleted() {
-        when(databaseMock.delete(DataAccess.PASSWORD_TABLE,"password_id = ?", new String[] {String.valueOf(1L)}))
-                .thenReturn(0);
+        when(
+                databaseMock.delete(
+                        DataAccess.PASSWORD_TABLE,
+                        "password_id = ?",
+                        new String[] {String.valueOf(1L)}
+                )
+        ).thenReturn(0);
 
         assertFalse(dataAccess.deletePassword(1));
     }
@@ -205,9 +301,11 @@ public class DataAccessTest {
     public void updatePasswords_ReturnsTrue_IfPasswordsUpdated() {
         when(
                 databaseMock.update(
-                        DataAccess.PASSWORD_TABLE, contentValuesMock, "password_id = ?",
+                        DataAccess.PASSWORD_TABLE,
+                        contentValuesMock,
+                        "password_id = ?",
                         new String[] {"1"}
-                        )
+                )
         ).thenReturn(1);
 
         ArrayList<Password> passwords = new ArrayList<>();
@@ -232,7 +330,17 @@ public class DataAccessTest {
         ).thenReturn(0);
 
         ArrayList<Password> passwords = new ArrayList<>();
-        passwords.add(new Password(1, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
+        passwords.add(
+                new Password(
+                        1,
+                        1,
+                        "testLog",
+                        "pass",
+                        "testIV",
+                        "exampleWebsite",
+                        ""
+                )
+        );
 
         boolean result = dataAccess.updatePasswords(passwords);
 

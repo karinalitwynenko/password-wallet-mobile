@@ -1,4 +1,4 @@
-package bsi.passwordWallet;
+package bsi.passwordWallet.activities;
 
 import android.content.Intent;
 import android.graphics.Paint;
@@ -12,6 +12,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import bsi.passwordWallet.DataAccess;
+import bsi.passwordWallet.DatabaseOpenHelper;
+import bsi.passwordWallet.Encryption;
+import bsi.passwordWallet.R;
+import bsi.passwordWallet.User;
+import bsi.passwordWallet.activities.WalletActivity;
+import bsi.passwordWallet.services.UserService;
 
 public class LoginActivity extends AppCompatActivity {
     EditText loginInput;
@@ -59,7 +66,7 @@ public class LoginActivity extends AppCompatActivity {
             else
                 encryptionMethod = Encryption.HMAC_SHA512;
 
-            User user = null;
+            User user;
 
             try {
                 user = new UserService().signUp(
@@ -88,7 +95,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             String password = passwordInput.getText().toString();
-            User user = null;
+            User user;
             try {
                 user = new UserService().signIn(
                         loginInput.getText().toString(),

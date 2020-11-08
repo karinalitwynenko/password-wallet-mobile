@@ -1,9 +1,10 @@
-package bsi.passwordWallet;
+package bsi.passwordWallet.activities;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -11,6 +12,10 @@ import android.widget.Toast;
 import java.util.HashMap;
 
 import androidx.fragment.app.DialogFragment;
+import bsi.passwordWallet.Password;
+import bsi.passwordWallet.R;
+import bsi.passwordWallet.User;
+import bsi.passwordWallet.services.PasswordService;
 
 public class AddPasswordDialog extends DialogFragment {
     EditText loginEditText;
@@ -31,10 +36,10 @@ public class AddPasswordDialog extends DialogFragment {
         @Override
         public void onClick(View v) {
             HashMap<String, String> passwordParams = new HashMap<>();
-            passwordParams.put(DataAccess.LOGIN, loginEditText.getText().toString());
-            passwordParams.put(DataAccess.PASSWORD, passwordEditText.getText().toString());
-            passwordParams.put(DataAccess.WEBSITE, websiteEditText.getText().toString());
-            passwordParams.put(DataAccess.DESCRIPTION, descriptionEditText.getText().toString());
+            passwordParams.put(Password.LOGIN, loginEditText.getText().toString());
+            passwordParams.put(Password.PASSWORD, passwordEditText.getText().toString());
+            passwordParams.put(Password.WEBSITE, websiteEditText.getText().toString());
+            passwordParams.put(Password.DESCRIPTION, descriptionEditText.getText().toString());
 
             Password newPassword;
             try {
@@ -60,12 +65,7 @@ public class AddPasswordDialog extends DialogFragment {
         }
     };
 
-    View.OnClickListener closeOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            dismiss();
-        }
-    };
+    View.OnClickListener closeOnClickListener = v -> dismiss();
 
     public AddPasswordDialog(User user, byte[] masterPassword, WalletActivity.PasswordCreatedListener passwordCreatedListener) {
         this.user = user;
@@ -75,7 +75,7 @@ public class AddPasswordDialog extends DialogFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getDialog().requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         View v = inflater.inflate(R.layout.dialog_add_password, container, false);
 

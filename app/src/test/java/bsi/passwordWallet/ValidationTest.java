@@ -21,7 +21,7 @@ public class ValidationTest {
 
     @DataProvider(name = "validatePasswordValidPasswords")
     public Object[][] validPasswords() {
-        return new Object[][] { {"p", ""}, {"3214sdfgfsfe32rtafsafdfsfda432", ""} };
+        return new Object[][] { {"p", ""}, {"30charstestpasswordtestPASSWOR", ""} };
     }
 
     @Test(dataProvider = "validatePasswordValidPasswords")
@@ -31,7 +31,8 @@ public class ValidationTest {
 
     @DataProvider(name = "validatePasswordTooLongPasswords")
     public Object[][] tooLongPasswords() {
-        String warningMessage = String.format(Validation.PASSWORD_CANT_BE_LONGER_THAN, Validation.PASSWORD_MAX_LENGTH);
+        String warningMessage =
+                String.format(Validation.PASSWORD_CANT_BE_LONGER_THAN, Validation.PASSWORD_MAX_LENGTH);
         return new Object[][] {
                 {"verylooooooooooooooooooooooooooooooooongpassword", warningMessage},
                 {"31characterslongpasswordtesttes", warningMessage}
@@ -60,7 +61,8 @@ public class ValidationTest {
 
     @DataProvider(name = "validateLoginTooLongLogins")
     public Object[][] tooLongLogins() {
-        String warningMessage = String.format(Validation.LOGIN_CANT_BE_LONGER_THAN, Validation.LOGIN_MAX_LENGTH);
+        String warningMessage =
+                String.format(Validation.LOGIN_CANT_BE_LONGER_THAN, Validation.LOGIN_MAX_LENGTH);
 
         return new Object[][] {
                 {"31charactersLongLoginTestTestTe", warningMessage},
@@ -93,7 +95,8 @@ public class ValidationTest {
 
     @DataProvider(name = "validateWebsiteTooLongWebsites")
     public Object[][] tooLongWebsites() {
-        String warningMessage = String.format(Validation.WEBSITE_CANT_BE_LONGER_THAN, Validation.WEBSITE_MAX_LENGTH);
+        String warningMessage =
+                String.format(Validation.WEBSITE_CANT_BE_LONGER_THAN, Validation.WEBSITE_MAX_LENGTH);
 
         return new Object[][] {
                 {new String(new byte[301]), warningMessage},

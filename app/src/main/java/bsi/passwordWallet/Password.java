@@ -1,6 +1,14 @@
 package bsi.passwordWallet;
 
-class Password {
+public class Password {
+    public static final String PASSWORD_ID = "password_id";
+    public static final String USER_ID = "user_id";
+    public static final String LOGIN = "login";
+    public static final String WEBSITE = "website";
+    public static final String DESCRIPTION = "description";
+    public static final String PASSWORD = "password";
+    public static final String IV = "iv";
+
     private long passwordID;
     private long userID;
     private String login;
@@ -40,6 +48,8 @@ class Password {
     public String getIV() {
         return this.iv;
     }
+
+    public Password() {}
 
     public Password(long passwordID, long userID, String login, String password, String iv, String website, String description) {
         this.userID = userID;

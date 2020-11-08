@@ -1,6 +1,8 @@
 package bsi.passwordWallet;
 
-class Validation {
+import android.annotation.SuppressLint;
+
+public class Validation {
     static final int LOGIN_MAX_LENGTH = 30;
     static final int PASSWORD_MAX_LENGTH = 30;
     static final int WEBSITE_MAX_LENGTH = 300;
@@ -12,6 +14,7 @@ class Validation {
     static final String WEBSITE_CANT_BE_EMPTY = "Website can't be empty";
     static final String WEBSITE_CANT_BE_LONGER_THAN = "Website can't be longer than %d characters";
 
+    @SuppressLint("DefaultLocale")
     public String validatePassword(String password) {
         if(password.isEmpty())
             return PASSWORD_CANT_BE_EMPTY;
@@ -20,6 +23,7 @@ class Validation {
         else return "";
     }
 
+    @SuppressLint("DefaultLocale")
     public String validateLogin(String login) {
         if(login.isEmpty())
             return LOGIN_CANT_BE_EMPTY;
@@ -29,6 +33,7 @@ class Validation {
         else return "";
     }
 
+    @SuppressLint("DefaultLocale")
     public String validateWebsite(String website) {
         if(website.isEmpty())
             return WEBSITE_CANT_BE_EMPTY;

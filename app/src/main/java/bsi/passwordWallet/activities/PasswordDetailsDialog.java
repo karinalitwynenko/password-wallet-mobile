@@ -1,4 +1,4 @@
-package bsi.passwordWallet;
+package bsi.passwordWallet.activities;
 
 import android.os.Bundle;
 import android.text.method.PasswordTransformationMethod;
@@ -9,15 +9,13 @@ import android.view.Window;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-
 import androidx.fragment.app.DialogFragment;
+import bsi.passwordWallet.DataAccess;
+import bsi.passwordWallet.Encryption;
+import bsi.passwordWallet.Password;
+import bsi.passwordWallet.R;
 
 public class PasswordDetailsDialog extends DialogFragment {
     WalletActivity.PasswordDeletedListener passwordDeletedListener;
@@ -42,14 +40,15 @@ public class PasswordDetailsDialog extends DialogFragment {
         passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
 
         Encryption encryption = new Encryption();
-        try {
-            encryption.setCipher(new Encryption.CipherWrapper(Cipher.getInstance("AES/CBC/PKCS7PADDING")));
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            e.printStackTrace();
-        }
 
         loginEditText.setText(password.getLogin());
-        passwordEditText.setText(encryption.decryptAES128(password.getPassword(), new SecretKeySpec(userPassword, "AES"),  new IvParameterSpec(Base64.getDecoder().decode(password.getIV()))));
+        passwordEditText.setText(
+                encryption.decryptAES128(
+                        password.getPassword(),
+                        userPassword,
+                        Base64.getDecoder().decode(password.getIV())
+                )
+        );
         websiteEditText.setText(password.getWebsite());
         descriptionEditText.setText(password.getDescription());
 

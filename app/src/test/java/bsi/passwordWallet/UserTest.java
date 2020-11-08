@@ -19,7 +19,7 @@ public class UserTest {
     public void setUp() {
         user = new User(
                 1,
-                "TestLogin",
+                "testLogin",
                 Encryption.SHA512,
                 "testpassword",
                 "testsalt"

@@ -1,24 +1,23 @@
-package bsi.passwordWallet;
+package bsi.passwordWallet.services;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import bsi.passwordWallet.DataAccess;
+import bsi.passwordWallet.Encryption;
+import bsi.passwordWallet.User;
+import bsi.passwordWallet.Validation;
 
-class UserService {
+public class UserService {
     public final static String USER_DOES_NOT_EXIST = "User doesn't exist";
     public final static String INCORRECT_PASSWORD = "Incorrect password";
     public final static String PASSWORDS_DO_NOT_MATCH = "Passwords don't match";
     public final static String LOGIN_EXISTS = "Login already exists";
     public final static String COULD_NOT_CREATE = "Couldn't create user's account";
+    private DataAccess dataAccess = DataAccess.getInstance();
     private Validation validation = new Validation();
     private Encryption encryption = new Encryption();
-    private DataAccess dataAccess = new DataAccess();
 
-    static class UserAccountException extends Exception {
+    public static class UserAccountException extends Exception {
         UserAccountException(String message){
             super(message);
         }
@@ -42,62 +41,30 @@ class UserService {
         if(!oldPassword.equals(masterPassword))
             throw new UserAccountException("Incorrect user password");
 
-        String newPasswordHash, encryptionMethod;
+        String newPasswordHash;
         String newSalt = encryption.generateSalt64();
 
         if(user.getEncryptionMethod().equals(Encryption.SHA512))
-            encryptionMethod = Encryption.SHA512;
+            newPasswordHash = encryption.calculateSHA512(newPassword, newSalt);
         else
-            encryptionMethod = Encryption.HMAC_SHA512;
-
-        newPasswordHash = calculateHash(encryptionMethod, newPassword, newSalt);
+            newPasswordHash = encryption.calculateHMAC(newPassword, newSalt);
 
         if(dataAccess.updateUserMasterPassword(user.getId(), newPasswordHash, newSalt))
             return newPassword;
         else // if any error occurred
-            // notify the user
             throw new UserAccountException("Could not change user's password");
     }
 
-    String calculateHash(String encryptionMethod, String input, String salt) {
-        String hash;
-        if(encryptionMethod.equals(Encryption.SHA512)) {
-            try {
-                encryption.setMessageDigest(MessageDigest.getInstance(Encryption.SHA512));
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-            hash = encryption.calculateSHA512(input, salt, Encryption.PEPPER);
-
-        }
-        else {
-            try {
-                encryption.setMac(new Encryption.MacWrapper(Mac.getInstance(Encryption.HMAC_SHA512)));
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            }
-            hash = encryption.calculateHMAC(
-                    input,
-                    new SecretKeySpec(salt.getBytes(StandardCharsets.UTF_8), Encryption.HMAC_SHA512),
-                    Encryption.PEPPER
-            );
-        }
-
-        return hash;
-    }
-
-    User signIn(String login, String password) throws UserAccountException {
+    public User signIn(String login, String password) throws UserAccountException {
         String validationResult = validation.validateLogin(login);
         // check if the login has invalid format
         if(!validationResult.isEmpty())
             throw new UserAccountException(validationResult);
 
-
         validationResult = validation.validatePassword(password);
         // check if the password has invalid format
         if(!validationResult.isEmpty())
             throw new UserAccountException(validationResult);
-
 
          // try to get user with provided login
         User user = dataAccess.getUser(login);
@@ -106,13 +73,11 @@ class UserService {
             throw new UserAccountException(USER_DOES_NOT_EXIST);
 
         String hash;
-        String encryptionMethod;
-        if(user.getEncryptionMethod().equals(Encryption.SHA512))
-            encryptionMethod = Encryption.SHA512;
-        else
-            encryptionMethod = Encryption.HMAC_SHA512;
 
-        hash = new UserService().calculateHash(encryptionMethod, password, user.getSalt());
+        if(user.getEncryptionMethod().equals(Encryption.SHA512))
+            hash = encryption.calculateSHA512(password, user.getSalt());
+        else
+            hash = encryption.calculateHMAC(password, user.getSalt());
 
         // check if provided password is valid
         if(!hash.equals(user.getPassword()))
@@ -121,7 +86,7 @@ class UserService {
             return user;
     }
 
-    User signUp(String login, String password, String confirmPassword, String encryptionMethod) throws UserAccountException {
+    public User signUp(String login, String password, String confirmPassword, String encryptionMethod) throws UserAccountException {
         ArrayList<String> validationResults = new ArrayList<>();
         validationResults.add(validation.validatePassword(confirmPassword));
         validationResults.add(validation.validatePassword(password));
@@ -144,12 +109,15 @@ class UserService {
         if(user != null)
             throw new UserAccountException(LOGIN_EXISTS);
 
+        String hash;
         // generate random salt
         String salt = encryption.generateSalt64();
-        String hash;
 
         // generate hash for chosen encryption method
-        hash = calculateHash(encryptionMethod, password, salt);
+        if(encryptionMethod.equals(Encryption.SHA512))
+            hash = encryption.calculateSHA512(password, salt);
+        else
+            hash = encryption.calculateHMAC(password, salt);
 
         // create a user
         user = dataAccess.createUser(login, encryptionMethod, hash, salt);

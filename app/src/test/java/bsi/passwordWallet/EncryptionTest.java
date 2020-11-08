@@ -1,169 +1,59 @@
 package bsi.passwordWallet;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.security.MessageDigest;
-
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
 
 public class EncryptionTest {
-
     Encryption encryption;
 
-    @BeforeMethod
+    @Before
     public void setUp() {
         encryption = new Encryption();
-    }
-
-//    @DataProvider(name = "randomIVDataProvider")
-//    public static Object[][] ivData() {
-//        return  new Object[][] {
-//                {new byte[]{1}, "[B@22927a81".getBytes(StandardCharsets.US_ASCII)},
-//                {new byte[]{-1}, "[B@2c8d66b2".getBytes()},
-//                {new byte[]{-56, 120, 0, -121}, "[B@2f7c7260".getBytes()}
-//        };
-//    }
-
-//    @Test(dataProvider = "randomIVDataProvider")
-//    public void randomIV_GeneratesIV_IfSeedSpecified(byte[] seed, byte[] expIV) {
-//        byte[] iv = new byte[16];
-//        //Encryption.randomIV(new byte[]{-56, 120, 0, -121});
-//        //System.out.println(iv);
-//        assertArrayEquals(Encryption.randomIV(seed), expIV);
-//    }
-
-    @Test
-    public void calculateSHA512_CalculatesHash_WhenValidDataPassed() {
-        encryption.setMessageDigest(new MessageDigest("") {
-            @Override
-            protected void engineUpdate(byte input) { }
-
-            @Override
-            protected void engineUpdate(byte[] input, int offset, int len) { }
-
-            @Override
-            protected byte[] engineDigest() {
-                return new byte[64];
-            }
-
-            @Override
-            protected void engineReset() { }
-        });
-
-        String hash = encryption.calculateSHA512("test", "salt", "pepper");
-        assertNotNull(hash);
-        assertEquals(64, hash.length());
+        System.out.println("setup");
     }
 
     @Test
-    public void calculateHMAC_CalculatesHash_WhenValidDataPassed() {
-        encryption.setMac(new Encryption.MacWrapper() {
-            @Override
-            public void init(SecretKeySpec keySpec) { }
+    public void calculateSHA512_ReturnsHash_IfDataValid() {
+        String calculatedHash = encryption.calculateSHA512("testinput", "testsalt");
+        String expectedHash =
+                "hGcVOneY/UR2LaPHNawSFpgq23fL2MQdZd33Gp90kKAzPp"
+                + "XCIsKcedY5k3S8tK3xCuIw9H12/xldibTiEx2pFw==";
 
-            @Override
-            public void update(byte[] input) { }
-
-            @Override
-            public byte[] doFinal(byte[] input) {
-                return new byte[64];
-            }
-        });
-
-        String hash = encryption.calculateHMAC("test", null, "testpepper");
-        assertNotNull(hash);
-        assertEquals(64, hash.length());
-    }
-//
-//    @Test(expectedExceptions = InvalidKeyException.class)
-//    public void calculateHMAC_ThrowsException_WhenKeyInvalid() {
-//        encryption.setMac(new Encryption.MacWrapper() {
-//            @Override
-//            public void init(SecretKeySpec keySpec) throws InvalidKeyException {
-//                throw new InvalidKeyException();
-//            }
-//
-//            @Override
-//            public void update(byte[] input) { }
-//
-//            @Override
-//            public byte[] doFinal(byte[] input) {
-//                return new byte[64];
-//            }
-//        });
-//
-//        String hash = encryption.calculateHMAC("test", null, "testpepper");
-//    }
-
-    @Test
-    public void calculateMD5_CalculatesHash_WhenValidDataPassed() {
-        encryption.setMessageDigest(new MessageDigest("") {
-            @Override
-            protected void engineUpdate(byte input) { }
-
-            @Override
-            protected void engineUpdate(byte[] input, int offset, int len) { }
-
-            @Override
-            protected byte[] engineDigest() {
-                return new byte[16];
-            }
-
-            @Override
-            protected void engineReset() { }
-        });
-
-        byte[] hash = encryption.calculateMD5("test");
-        assertNotNull(hash);
-        assertEquals(16, hash.length);
+        assertEquals(expectedHash, calculatedHash);
     }
 
     @Test
-    public void encryptAES128_EncryptsInput_WhenValidDataPassed() {
-        encryption.setCipher(new Encryption.CipherWrapper() {
-            @Override
-            public void init(int mode, SecretKeySpec secretKeySpec, IvParameterSpec ivParam) { }
+    public void calculateHMAC_ReturnsHash_IfDataValid() {
+        String calculatedHash = encryption.calculateHMAC("testinput", "testsalt");
+        String expectedHash =
+                "WXRTP8K+6QGuevBqWeMbrC8rxZun2JoBgOm5FQ4xzON2n"
+                 + "JMYqFimXnyttxILGY2DwpsPxf90QHJBrkBmj+/Npw==";
 
-            @Override
-            public byte[] doFinal(byte[] input) {
-                return new byte[16];
-            }
-        });
-
-        String cipher = encryption.encryptAES128("testInput123", null, null);
-        assertNotNull(cipher);
+        assertEquals(expectedHash, calculatedHash);
     }
 
     @Test
-    public void decryptAES128_DecryptsInput_WhenValidDataPassed() {
-        encryption.setCipher(new Encryption.CipherWrapper() {
-            @Override
-            public void init(int mode, SecretKeySpec secretKeySpec, IvParameterSpec ivParam) { }
+    public void encryptAES128_ReturnsEncryptedData_IfDataValid() {
+        String calculatedCipher = encryption.encryptAES128(
+                "testinput", "testkeytestkeyte".getBytes(), "testivtesttestIV".getBytes()
+        );
 
-            @Override
-            public byte[] doFinal(byte[] input) {
-                return new byte[16];
-            }
-        });
+        String expectedCipher = "Uctqj5osVdvO+ThT9nmkLw==";
 
-        String decrypted = encryption.decryptAES128("231gfd3r4", null, null);
-        assertNotNull(decrypted);
+        assertEquals(expectedCipher, calculatedCipher);
     }
 
-//    @Test
-//    public void generateSalt64_GeneratesSalt() {
-//        String salt = Encryption.generateSalt64();
-//        assertNotNull(salt);
-//    }
-//
-//    @Test
-//    public void randomIV_GeneratesIV() {
-//        byte[] iv = Encryption.randomIV();
-//        assertNotNull(iv);
-//    }
+    @Test
+    public void decryptAES128_ReturnsDecryptedData_IfDataValid() {
+        String decrypted = encryption.encryptAES128(
+                "testencrypted", "testkeytestkeyte".getBytes(), "testivtesttestIV".getBytes()
+        );
+
+        String expectedText = "NrIe7Qlz02I7SH0olkvc8A==";
+
+        assertEquals(expectedText, decrypted);
+    }
+
 }

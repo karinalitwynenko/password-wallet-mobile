@@ -1,4 +1,4 @@
-package bsi.passwordWallet;
+package bsi.passwordWallet.activities;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,6 +12,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.fragment.app.DialogFragment;
+import bsi.passwordWallet.R;
+import bsi.passwordWallet.User;
+import bsi.passwordWallet.Validation;
+import bsi.passwordWallet.services.UserService;
 
 public class UserAccountDialog extends DialogFragment {
     WalletActivity.UserPasswordModifiedListener userPasswordModifiedListener;
@@ -19,17 +23,10 @@ public class UserAccountDialog extends DialogFragment {
     String userPassword;
     boolean passwordModified = false;
 
-    Validation validation;
-
-    void setValidation(Validation validation) {
-        this.validation = validation;
-    }
-
     public UserAccountDialog(User user, String userPassword, WalletActivity.UserPasswordModifiedListener userPasswordModifiedListener) {
         this.user = user;
         this.userPassword = userPassword;
         this.userPasswordModifiedListener = userPasswordModifiedListener;
-        setValidation(new Validation());
     }
 
     @Override
@@ -85,7 +82,6 @@ public class UserAccountDialog extends DialogFragment {
                         userPasswordModifiedListener.userPasswordModified(newMasterPassword);
                         dismiss();
                     }
-
                 }
             }
         });
@@ -129,12 +125,7 @@ public class UserAccountDialog extends DialogFragment {
         });
 
         // dismiss the dialog when the user clicks on close button (cross)
-        v.findViewById(R.id.close_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dismiss();
-            }
-        });
+        v.findViewById(R.id.close_button).setOnClickListener(view -> dismiss());
 
         return v;
     }
