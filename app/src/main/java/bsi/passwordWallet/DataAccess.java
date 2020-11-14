@@ -173,7 +173,7 @@ public class DataAccess {
             contentValues.put(Password.PASSWORD, p.getPassword());
             contentValues.put(Password.IV, p.getIV());
             if(database.update(PASSWORD_TABLE, contentValues, "password_id = ?",
-                    new String[] {p.getPasswordID() + ""}) == 0) {
+                    new String[] {p.getId() + ""}) == 0) {
 
                 // rollback
                 database.endTransaction();

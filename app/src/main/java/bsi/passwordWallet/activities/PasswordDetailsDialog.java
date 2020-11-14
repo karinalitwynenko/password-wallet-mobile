@@ -77,7 +77,7 @@ public class PasswordDetailsDialog extends DialogFragment {
         v.findViewById(R.id.delete_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!new DataAccess().deletePassword(password.getPasswordID())) {
+                if(!new DataAccess().deletePassword(password.getId())) {
                     Toast.makeText(getContext(), "Could not delete the password", Toast.LENGTH_SHORT).show();
                 }
                 else {

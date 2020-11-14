@@ -566,4 +566,5 @@ public class UserServiceTest {
         );
         assertEquals(UserService.COULD_NOT_CREATE, thrown.getMessage());
     }
+
 }

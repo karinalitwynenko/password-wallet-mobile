@@ -103,7 +103,6 @@ public class PasswordServiceTest {
 
     @Test
     public void addPassword_ThrowsPasswordCreationException_IfLoginValidationFailed() {
-
         HashMap<String, String> passwordParams = new HashMap<>();
         passwordParams.put(Password.LOGIN, "");
         passwordParams.put(Password.PASSWORD, "testPassword");
@@ -136,7 +135,6 @@ public class PasswordServiceTest {
 
     @Test
     public void addPassword_ThrowsPasswordCreationException_IfPasswordValidationFailed() {
-
         HashMap<String, String> passwordParams = new HashMap<>();
         passwordParams.put(Password.LOGIN, "");
         passwordParams.put(Password.PASSWORD, "testPassword");
@@ -169,7 +167,6 @@ public class PasswordServiceTest {
 
     @Test
     public void addPassword_ThrowsPasswordCreationException_IfWebsiteValidationFailed() {
-
         HashMap<String, String> passwordParams = new HashMap<>();
         passwordParams.put(Password.LOGIN, "");
         passwordParams.put(Password.PASSWORD, "testPassword");

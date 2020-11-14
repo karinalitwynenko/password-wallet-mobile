@@ -9,8 +9,8 @@ public class Password {
     public static final String PASSWORD = "password";
     public static final String IV = "iv";
 
-    private long passwordID;
-    private long userID;
+    private long id;
+    private long userId;
     private String login;
     private String password;
     private String iv;
@@ -25,8 +25,8 @@ public class Password {
         this.iv = iv;
     }
 
-    public long getPasswordID() {
-        return passwordID;
+    public long getId() {
+        return id;
     }
 
     public String getLogin() {
@@ -51,9 +51,9 @@ public class Password {
 
     public Password() {}
 
-    public Password(long passwordID, long userID, String login, String password, String iv, String website, String description) {
-        this.userID = userID;
-        this.passwordID = passwordID;
+    public Password(long passwordId, long userId, String login, String password, String iv, String website, String description) {
+        this.id = passwordId;
+        this.userId = userId;
         this.login = login;
         this.password = password;
         this.iv = iv;

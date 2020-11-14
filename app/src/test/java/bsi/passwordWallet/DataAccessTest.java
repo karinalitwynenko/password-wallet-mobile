@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -60,6 +61,8 @@ public class DataAccessTest {
 
         User user = dataAccess.getUser("testLogin");
 
+        verify(databaseMock)
+                .rawQuery("select * from " + DataAccess.USER_TABLE + " where login = ?", new String[] {"testLogin"});
         verify(cursor).getCount();
         verifyNoMoreInteractions(cursor);
         assertNull(user);
@@ -75,15 +78,15 @@ public class DataAccessTest {
 
         User user = dataAccess.getUser("testLogin");
 
+        verify(databaseMock)
+                .rawQuery("select * from " + DataAccess.USER_TABLE + " where login = ?", new String[] {"testLogin"});
         verify(cursor).getCount();
         verify(cursor).moveToFirst();
-
         verify(cursor).getColumnIndex(User.USER_ID);
         verify(cursor).getColumnIndex(User.LOGIN);
         verify(cursor).getColumnIndex(User.ENCRYPTION_TYPE);
         verify(cursor).getColumnIndex(User.PASSWORD_HASH);
         verify(cursor).getColumnIndex(User.SALT);
-
         assertNotNull(user);
         assertEquals(1L, user.getId());
         assertEquals("test", user.getLogin());
@@ -94,13 +97,7 @@ public class DataAccessTest {
 
     @Test
     public void createUser_ReturnsNewUser_IfCreated() {
-        when(
-                databaseMock.insert(
-                        DataAccess.USER_TABLE,
-                        null,
-                        contentValuesMock
-                )
-        ).thenReturn(2L);
+        when(databaseMock.insert(anyString(), any(), any())).thenReturn(2L);
 
         User user = dataAccess.createUser(
                 "testLogin", Encryption.HMAC_SHA512, "testHash", "testSalt"
@@ -111,7 +108,6 @@ public class DataAccessTest {
         verify(contentValuesMock).put(User.PASSWORD_HASH, "testHash");
         verify(contentValuesMock).put(User.SALT, "testSalt");
         verify(databaseMock).insert(DataAccess.USER_TABLE, null, contentValuesMock);
-
         assertNotNull(user);
         assertEquals(2L, user.getId());
         assertEquals("testLogin", user.getLogin());
@@ -122,13 +118,7 @@ public class DataAccessTest {
 
     @Test
     public void createUser_ReturnsNull_IfUserNotCreated() {
-        when(
-                databaseMock.insert(
-                        DataAccess.USER_TABLE,
-                        null,
-                        contentValuesMock
-                )
-        ).thenReturn(-1L);
+        when(databaseMock.insert(anyString(), any(), any())).thenReturn(-1L);
 
         User user = dataAccess.createUser(
                 "testLogin", Encryption.HMAC_SHA512, "testHash", "testSalt"
@@ -139,54 +129,35 @@ public class DataAccessTest {
         verify(contentValuesMock).put(User.PASSWORD_HASH, "testHash");
         verify(contentValuesMock).put(User.SALT, "testSalt");
         verify(databaseMock).insert(DataAccess.USER_TABLE, null, contentValuesMock);
-
         assertNull(user);
     }
 
     @Test
     public void updateUserMasterPassword_ReturnsTrue_IfPasswordUpdated() {
-        when(
-                databaseMock.update(
-                        DataAccess.USER_TABLE,
-                        contentValuesMock,
-                        "user_id = ?",
-                        new String[] {"1"}
-                )
-        ).thenReturn(1);
+        when(databaseMock.update(anyString(), any(), anyString(), any())).thenReturn(1);
 
         boolean result =
                 dataAccess.updateUserMasterPassword(1, "testPassword", "testSalt");
 
         verify(contentValuesMock).put(User.PASSWORD_HASH, "testPassword");
         verify(contentValuesMock).put(User.SALT, "testSalt");
-
         verify(databaseMock).beginTransaction();
         verify(databaseMock)
                 .update(DataAccess.USER_TABLE, contentValuesMock, "user_id = ?", new String[] {"1"});
-
         assertTrue(result);
     }
 
     @Test
     public void updateUserMasterPassword_ReturnsFalse_IfPasswordNotUpdated() {
-        when(
-                databaseMock.update(
-                        DataAccess.USER_TABLE,
-                        contentValuesMock,
-                        "user_id = ?",
-                        new String[] {"1"}
-                )
-        ).thenReturn(-1);
+        when(databaseMock.update(anyString(), any(), anyString(), any())).thenReturn(-1);
 
         boolean result = dataAccess.updateUserMasterPassword(1, "testPassword", "testSalt");
 
         verify(contentValuesMock).put(User.PASSWORD_HASH, "testPassword");
         verify(contentValuesMock).put(User.SALT, "testSalt");
-
         verify(databaseMock).beginTransaction();
         verify(databaseMock)
                 .update(DataAccess.USER_TABLE, contentValuesMock, "user_id = ?", new String[] {"1"});
-
         assertFalse(result);
     }
 
@@ -194,22 +165,18 @@ public class DataAccessTest {
     public void getPasswords_ReturnsNonEmptyPasswordList_IfPasswordsExist() {
         Cursor cursor = mock(Cursor.class);
 
-        when(
-                databaseMock.rawQuery(
-                        "select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?",
-                        new String[] {"1"}
-                )
-        ).thenReturn(cursor);
-
+        when(databaseMock.rawQuery(anyString(), any())).thenReturn(cursor);
         when(cursor.moveToNext()).thenReturn(true).thenReturn(true).thenReturn(false);
         when(cursor.getLong(anyInt())).thenReturn(1L);
         when(cursor.getString(anyInt())).thenReturn("test");
 
         ArrayList<Password> passwords = dataAccess.getPasswords(1);
+
+        verify(databaseMock)
+                .rawQuery("select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?", new String[] {"1"});
         verify(cursor, times(3)).moveToNext();
         verify(cursor, times(4)).getLong(anyInt());
         verify(cursor, times(10)).getString(anyInt());
-
         assertEquals(2, passwords.size());
         assertNotNull(passwords.get(0));
         assertNotNull(passwords.get(1));
@@ -218,17 +185,13 @@ public class DataAccessTest {
     @Test
     public void getPasswords_ReturnsEmptyPasswordList_IfPasswordsDoNotExist() {
         Cursor cursor = mock(Cursor.class);
-
-        when(
-                databaseMock.rawQuery(
-                        "select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?",
-                        new String[] {"1"}
-                )
-        ).thenReturn(cursor);
-
+        when(databaseMock.rawQuery(anyString(), any())).thenReturn(cursor);
         when(cursor.moveToNext()).thenReturn(false);
 
         ArrayList<Password> passwords = dataAccess.getPasswords(1);
+
+        verify(databaseMock)
+                .rawQuery("select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?", new String[] {"1"});
         verify(cursor, times(1)).moveToNext();
         verifyNoMoreInteractions(cursor);
         assertNotNull(passwords);
@@ -237,8 +200,7 @@ public class DataAccessTest {
 
     @Test
     public void createPassword_ReturnsNewPassword_IfCreated() {
-        when(databaseMock.insert(DataAccess.PASSWORD_TABLE, null, contentValuesMock))
-                .thenReturn(1L);
+        when(databaseMock.insert(anyString(), any(), any())).thenReturn(1L);
 
         Password password = dataAccess.createPassword(
                 1L,
@@ -249,15 +211,25 @@ public class DataAccessTest {
                 "testDesc"
         );
 
-        verify(contentValuesMock, times(1)).put(anyString(), anyLong());
-        verify(contentValuesMock, times(5)).put(anyString(), anyString());
+        verify(contentValuesMock).put(Password.USER_ID, 1L);
+        verify(contentValuesMock).put(Password.LOGIN, "testLogin");
+        verify(contentValuesMock).put(Password.PASSWORD, "passwd");
+        verify(contentValuesMock).put(Password.IV, "testIV");
+        verify(contentValuesMock).put(Password.WEBSITE, "testWebsite");
+        verify(contentValuesMock).put(Password.DESCRIPTION, "testDesc");
+        verify(databaseMock).insert(DataAccess.PASSWORD_TABLE, null, contentValuesMock);
+        assertEquals(1L, password.getId());
+        assertEquals("testLogin", password.getLogin());
+        assertEquals("passwd", password.getPassword());
+        assertEquals("testIV", password.getIV());
+        assertEquals("testWebsite", password.getWebsite());
+        assertEquals("testDesc", password.getDescription());
         assertNotNull(password);
     }
 
     @Test
     public void createPassword_ReturnsNull_IfNotCreated() {
-        when(databaseMock.insert(DataAccess.PASSWORD_TABLE, null, contentValuesMock))
-                .thenReturn(-1L);
+        when(databaseMock.insert(anyString(), any(), any())).thenReturn(-1L);
 
         Password password = dataAccess.createPassword(
                 1L,
@@ -268,83 +240,69 @@ public class DataAccessTest {
                 "testDesc"
         );
 
+        verify(contentValuesMock).put(Password.USER_ID, 1L);
+        verify(contentValuesMock).put(Password.LOGIN, "testLogin");
+        verify(contentValuesMock).put(Password.PASSWORD, "passwd");
+        verify(contentValuesMock).put(Password.IV, "testIV");
+        verify(contentValuesMock).put(Password.WEBSITE, "testWebsite");
+        verify(contentValuesMock).put(Password.DESCRIPTION, "testDesc");
+        verify(databaseMock).insert(DataAccess.PASSWORD_TABLE, null, contentValuesMock);
         assertNull(password);
     }
 
     @Test
     public void deletePassword_ReturnsTrue_IfPasswordDeleted() {
-        when(
-                databaseMock.delete(
-                        DataAccess.PASSWORD_TABLE,
-                        "password_id = ?",
-                        new String[] {String.valueOf(1L)}
-                )
-        ).thenReturn(1);
+        when(databaseMock.delete(anyString(), anyString(), any())).thenReturn(1);
 
         assertTrue(dataAccess.deletePassword(1));
+        verify(databaseMock).delete(DataAccess.PASSWORD_TABLE, "password_id = ?", new String[] {"1"});
     }
 
     @Test
     public void deletePassword_ReturnsFalse_IfPasswordNotDeleted() {
-        when(
-                databaseMock.delete(
-                        DataAccess.PASSWORD_TABLE,
-                        "password_id = ?",
-                        new String[] {String.valueOf(1L)}
-                )
-        ).thenReturn(0);
+        when(databaseMock.delete(anyString(), anyString(), any())).thenReturn(0);
 
         assertFalse(dataAccess.deletePassword(1));
+        verify(databaseMock).delete(DataAccess.PASSWORD_TABLE, "password_id = ?", new String[] {"1"});
     }
 
     @Test
     public void updatePasswords_ReturnsTrue_IfPasswordsUpdated() {
-        when(
-                databaseMock.update(
-                        DataAccess.PASSWORD_TABLE,
-                        contentValuesMock,
-                        "password_id = ?",
-                        new String[] {"1"}
-                )
-        ).thenReturn(1);
+        when(databaseMock.update(anyString(), any(), anyString(), any())).thenReturn(1);
 
         ArrayList<Password> passwords = new ArrayList<>();
         passwords.add(new Password(1, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
-        passwords.add(new Password(1, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
+        passwords.add(new Password(2, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
 
         boolean result = dataAccess.updatePasswords(passwords);
 
+        verify(databaseMock, times(1))
+                .update(DataAccess.PASSWORD_TABLE, contentValuesMock, "password_id = ?", new String[] {"1"});
+        verify(databaseMock, times(1))
+                .update(DataAccess.PASSWORD_TABLE, contentValuesMock, "password_id = ?", new String[] {"2"});
+
         verify(databaseMock, times(1)).setTransactionSuccessful();
         verify(databaseMock, times(1)).endTransaction();
-
+        verifyNoMoreInteractions(databaseMock);
         assertTrue(result);
     }
 
     @Test
     public void updatePasswords_ReturnsFalse_IfPasswordsNotUpdated() {
-        when(
-                databaseMock.update(
-                        DataAccess.PASSWORD_TABLE, contentValuesMock, "password_id = ?",
-                        new String[] {"1"}
-                )
-        ).thenReturn(0);
+        when(databaseMock.update(anyString(), any(), anyString(), any())).thenReturn(1).thenReturn(0);
 
         ArrayList<Password> passwords = new ArrayList<>();
-        passwords.add(
-                new Password(
-                        1,
-                        1,
-                        "testLog",
-                        "pass",
-                        "testIV",
-                        "exampleWebsite",
-                        ""
-                )
-        );
+        passwords.add(new Password(1, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
+        passwords.add(new Password(2, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
+        passwords.add(new Password(3, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
 
         boolean result = dataAccess.updatePasswords(passwords);
-
+        verify(databaseMock, times(1))
+                .update(DataAccess.PASSWORD_TABLE, contentValuesMock, "password_id = ?", new String[] {"1"});
+        verify(databaseMock, times(1))
+                .update(DataAccess.PASSWORD_TABLE, contentValuesMock, "password_id = ?", new String[] {"2"});
         verify(databaseMock, times(1)).endTransaction();
+        verifyNoMoreInteractions(databaseMock);
         assertFalse(result);
     }
 }
