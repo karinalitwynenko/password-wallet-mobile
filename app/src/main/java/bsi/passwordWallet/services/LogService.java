@@ -17,7 +17,7 @@ public class LogService {
 
     public final static String LOGIN_SUCCESS = "SUCCESS";
     public final static String LOGIN_FAIL = "FAIL";
-
+    public final static int FAILS_FROM_IP_LIMIT = 4;
     private DataAccess dataAccess = DataAccess.getInstance();
 
     /**
@@ -55,7 +55,7 @@ public class LogService {
         }
 
         // check if ip should be banned on next fail
-        if(failSequenceLength >= 3)
+        if(failSequenceLength >= FAILS_FROM_IP_LIMIT - 1)
             return true;
         else
             return false;

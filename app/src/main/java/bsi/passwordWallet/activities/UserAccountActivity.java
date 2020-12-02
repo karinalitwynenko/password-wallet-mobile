@@ -160,19 +160,5 @@ public class UserAccountActivity extends AppCompatActivity {
         blockedIPsAdapter = new BlockedIPsAdapter(DataAccess.getInstance().getBlockedIPs(user.getId()), this);
         blockedIPsListView.setAdapter(blockedIPsAdapter);
 
-        findViewById(R.id.change_master_password).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                // TODO: change master password
-//                UserAccountDialog dialog =
-//                    (UserAccountDialog)getSupportFragmentManager().findFragmentByTag("UserAccount");
-//                if(dialog == null) {
-//                    dialog = new UserAccountDialog(user, userPassword, userPasswordModifiedListener);
-//                    dialog.show(getSupportFragmentManager(), "UserAccount");
-//                }
-            }
-        });
-
     }
 }

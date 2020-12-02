@@ -56,7 +56,7 @@
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="0dp"
-        android:layout_height="80dp"
+        android:layout_height="100dp"
         android:background="@color/colorPrimaryDark"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
@@ -75,9 +75,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="1px"
                 android:background="@android:color/white"
-                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
                 android:id="@+id/title"
@@ -99,18 +99,32 @@
                 style="@style/button"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
-                android:maxWidth="160dp"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="16dp"
                 android:drawableEnd="@drawable/ic_baseline_account_circle_24"
-                android:gravity="center"
-                android:paddingEnd="12dp"
-                android:paddingStart="12dp"
-                android:textColor="@android:color/white"
-                android:maxLines="1"
                 android:ellipsize="end"
-                app:layout_constraintBottom_toBottomOf="parent"
+                android:gravity="center"
+                android:maxWidth="160dp"
+                android:maxLines="1"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="@android:color/white"
+                app:layout_constraintBottom_toTopOf="@+id/change_master_password"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/divider" />
+
+            <TextView
+                android:id="@+id/change_master_password"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:gravity="center"
+                android:text="@string/change_master_password"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/user_button" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
