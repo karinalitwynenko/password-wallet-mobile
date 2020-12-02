@@ -1,4 +1,4 @@
-package bsi.passwordWallet;
+package bsi.passwordWallet.services;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -6,12 +6,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import bsi.passwordWallet.services.UserService;
+import java.util.Date;
+
+import bsi.passwordWallet.DataAccess;
+import bsi.passwordWallet.Encryption;
+import bsi.passwordWallet.User;
+import bsi.passwordWallet.Validation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -26,193 +32,110 @@ public class UserServiceTest {
     Validation validationMock;
     @Mock
     Encryption encryptionMock;
-
+    @Mock
+    LogService logServiceMock;
+    @Mock
+    UserService.DateTime dateTimeMock;
     @InjectMocks
     UserService userService = new UserService();
 
+    /**
+     * TDD
+     */
     @Test
-    public void updatePassword_ReturnsNewSHA512Password_IfPasswordUpdated() {
-        User user = new User(
-                1,
-                "userLogin",
-                Encryption.SHA512,
-                "testpasswordhash", "testsalt"
+    public void signIn_AddsIpToBlocked_IfIpCheckReturnedTrueAndPasswordVerificationFailed() {
+        when(validationMock.validateLogin(anyString())).thenReturn("");
+        when(validationMock.validatePassword(anyString())).thenReturn("");
+        when(dataAccessMock.getUser(anyString())).thenReturn(
+                new User(
+                        1L,
+                        "testlogin",
+                        Encryption.SHA512,
+                        "testpasswordhash",
+                        "testsalt"
+                )
         );
 
-        String oldPassword = "testMasterPassword";
-        String newPassword = "testNewMasterPassword";
-        String currentMasterPassword = "testMasterPassword";
-
-        when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(encryptionMock.generateSalt64()).thenReturn("testSalt");
-        when(encryptionMock.calculateSHA512(anyString(), anyString())).thenReturn("testSha512Hash");
-        when(
-                dataAccessMock.updateUserMasterPassword(
-                        user.getId(), "testSha512Hash", "testSalt"
-                )
-        ).thenReturn(true);
-
-        String resultPassword = "";
+        when(dateTimeMock.getDate()).thenReturn(new Date(123));
+        when(encryptionMock.calculateSHA512(anyString(), anyString())).thenReturn("invalidtestpasswd");
 
         try {
-            resultPassword = userService.updatePassword(user, oldPassword, newPassword, currentMasterPassword);
+            when(logServiceMock.checkUserIP(any(), any(), any())).thenReturn(true);
         } catch (UserService.UserAccountException e) {
             e.printStackTrace();
         }
 
-        verify(validationMock).validatePassword(oldPassword);
-        verify(validationMock).validatePassword(newPassword);
-        verify(encryptionMock).generateSalt64();
-        verify(encryptionMock).calculateSHA512(newPassword, "testSalt");
-        verify(dataAccessMock).updateUserMasterPassword(user.getId(), "testSha512Hash", "testSalt");
-
-        assertEquals(newPassword, resultPassword);
-    }
-
-    @Test
-    public void updatePassword_ThrowsUserAccountException_IfPasswordCouldNotBeUpdated() {
-        User user = new User(
-                1,
-                "userLogin",
-                Encryption.SHA512,
-                "testpasswordhash", "testsalt"
-        );
-
-        String oldPassword = "testMasterPassword";
-        String newPassword = "testNewMasterPassword";
-        String currentMasterPassword = "testMasterPassword";
-
-        when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(encryptionMock.generateSalt64()).thenReturn("testSalt");
-        when(encryptionMock.calculateSHA512(anyString(), anyString())).thenReturn("testSha512Hash");
-
-        when(
-                dataAccessMock.updateUserMasterPassword(
-                        user.getId(), "testSha512Hash", "testSalt"
-                )
-        ).thenReturn(false);
-
         UserService.UserAccountException thrown = assertThrows(
                 UserService.UserAccountException.class,
-                () -> userService.updatePassword(user, oldPassword, newPassword, currentMasterPassword)
+                () -> assertNotNull(userService.signIn(
+                        "testlogin",
+                        "invalidtestpass",
+                        "10.0.10.1"
+                ))
         );
 
-        verify(validationMock).validatePassword(oldPassword);
-        verify(validationMock).validatePassword(newPassword);
-        verify(encryptionMock).generateSalt64();
-        verify(encryptionMock).calculateSHA512(newPassword, "testSalt");
-        verify(dataAccessMock).updateUserMasterPassword(user.getId(), "testSha512Hash", "testSalt");
-
-        assertEquals("Could not change user's password", thrown.getMessage());
+        verify(dataAccessMock).getUser("testlogin");
+        verify(encryptionMock).calculateSHA512("invalidtestpass", "testsalt");
+        verify(dataAccessMock).createBlockedIP(1L, "10.0.10.1");
     }
 
     @Test
-    public void updatePassword_ReturnsNewHmacPassword_IfPasswordUpdated() {
-        User user = new User(
-                1,
-                "userLogin",
-                Encryption.HMAC_SHA512,
-                "testpasswordhash", "testsalt"
+    public void signIn_CreatesSuccessLog_IfUserAuthenticationSucceeded() {
+        when(validationMock.validateLogin(anyString())).thenReturn("");
+        when(validationMock.validatePassword(anyString())).thenReturn("");
+        when(dataAccessMock.getUser(anyString())).thenReturn(
+                new User(
+                        1L,
+                        "testlogin",
+                        Encryption.SHA512,
+                        "testpasswordhash",
+                        "testsalt"
+                )
         );
 
-        String oldPassword = "testMasterPassword";
-        String newPassword = "testNewMasterPassword";
-        String currentMasterPassword = "testMasterPassword";
-
-        when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(encryptionMock.generateSalt64()).thenReturn("testSalt");
-        when(encryptionMock.calculateHMAC(anyString(), anyString())).thenReturn("testHmacHash");
-        when(
-                dataAccessMock.updateUserMasterPassword(
-                        user.getId(), "testHmacHash", "testSalt"
-                )
-        ).thenReturn(true);
-
-        String resultPassword = "";
+        when(encryptionMock.calculateSHA512(anyString(), anyString())).thenReturn("testpasswordhash");
+        when(dateTimeMock.getDate()).thenReturn(new Date(123));
 
         try {
-            resultPassword = userService.updatePassword(user, oldPassword, newPassword, currentMasterPassword);
+            userService.signIn("testlogin", "testpass", "10.0.10.1");
         } catch (UserService.UserAccountException e) {
-            e.printStackTrace();
+            fail("Unexpected exception");
         }
 
-        verify(validationMock).validatePassword(oldPassword);
-        verify(validationMock).validatePassword(newPassword);
-        verify(encryptionMock).generateSalt64();
-        verify(encryptionMock).calculateHMAC(newPassword, "testSalt");
-        verify(dataAccessMock).updateUserMasterPassword(user.getId(), "testHmacHash", "testSalt");
-
-        assertEquals(newPassword, resultPassword);
+        verify(dataAccessMock).createLoginLog(1L, "10.0.10.1", 123, LogService.LOGIN_SUCCESS);
     }
 
     @Test
-    public void updatePassword_ThrowsUserAccountException_IfOldPasswordValidationFailed() {
-        when(validationMock.validatePassword(anyString())).thenReturn(Validation.PASSWORD_CANT_BE_EMPTY);
-
-        UserService.UserAccountException thrown = assertThrows(
-                UserService.UserAccountException.class,
-                () -> userService.updatePassword(new User(), "", "testp1", "testp2")
-        );
-
-        verify(validationMock).validatePassword("");
-        verifyNoMoreInteractions(validationMock);
-        assertEquals(Validation.PASSWORD_CANT_BE_EMPTY, thrown.getMessage());
-    }
-
-    @Test
-    public void updatePassword_ThrowsUserAccountException_IfNewPasswordValidationFailed() {
-        when(
-                validationMock.validatePassword(anyString())
-        ).thenReturn("").thenReturn(Validation.PASSWORD_CANT_BE_LONGER_THAN);
-
-        UserService.UserAccountException thrown = assertThrows(
-                UserService.UserAccountException.class,
-                () -> userService.updatePassword(new User(), "testp1", "invalidTestPass", "")
-        );
-
-        verify(validationMock).validatePassword("testp1");
-        verify(validationMock).validatePassword("invalidTestPass");
-        verifyNoMoreInteractions(validationMock);
-        assertEquals(Validation.PASSWORD_CANT_BE_LONGER_THAN, thrown.getMessage());
-    }
-
-    @Test
-    public void updatePassword_ThrowsUserAccountException_IfPasswordsAreTheSame() {
+    public void signIn_CreatesFailLog_IfUserAuthenticationFailed() {
+        when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-
-        UserService.UserAccountException thrown = assertThrows(
-                UserService.UserAccountException.class,
-                () -> userService.updatePassword(
-                        new User(),
-                        "testpassword",
-                        "testpassword",
-                        ""
+        when(dataAccessMock.getUser(anyString())).thenReturn(
+                new User(
+                        1L,
+                        "testlogin",
+                        Encryption.SHA512,
+                        "testpasswordhash",
+                        "testsalt"
                 )
         );
 
-        verify(validationMock, times(2)).validatePassword("testpassword");
-        verifyNoMoreInteractions(validationMock);
-        assertEquals("New password is the same as the current one.", thrown.getMessage());
-    }
-
-    @Test
-    public void updatePassword_ThrowsUserAccountException_IfUserPasswordIncorrect() {
-        when(validationMock.validatePassword(anyString())).thenReturn("");
+        when(encryptionMock.calculateSHA512(anyString(), anyString())).thenReturn("invalidpasswordhash");
+        when(dateTimeMock.getDate()).thenReturn(new Date(123));
 
         UserService.UserAccountException thrown = assertThrows(
                 UserService.UserAccountException.class,
-                () -> userService.updatePassword(
-                        new User(),
-                        "testpassword",
-                        "testnewpassword",
-                        "masterpassw"
+                () -> userService.signIn(
+                        "testlogin",
+                        "invalidtestpass",
+                        "10.0.10.1"
                 )
         );
 
-        verify(validationMock).validatePassword("testpassword");
-        verify(validationMock).validatePassword("testnewpassword");
-        assertEquals("Incorrect user password", thrown.getMessage());
+        verify(dataAccessMock).createLoginLog(1L, "10.0.10.1", 123, LogService.LOGIN_FAIL);
     }
+    /**
+     * End of TDD
+     */
 
     @Test
     public void signIn_ThrowsUserAccountException_IfLoginValidationFailed() {
@@ -222,7 +145,8 @@ public class UserServiceTest {
                 UserService.UserAccountException.class,
                 () -> userService.signIn(
                         "testlogin",
-                        "testpasswd"
+                        "testpasswd",
+                        "10.0.10.1"
                 )
         );
 
@@ -240,13 +164,13 @@ public class UserServiceTest {
                 UserService.UserAccountException.class,
                 () -> userService.signIn(
                         "testlogin",
-                        "testpasswd"
+                        "testpasswd",
+                        "10.0.10.1"
                 )
         );
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock).validatePassword("testpasswd");
-
         verifyNoMoreInteractions(validationMock);
         assertEquals("invalid password", thrown.getMessage());
     }
@@ -261,14 +185,14 @@ public class UserServiceTest {
                 UserService.UserAccountException.class,
                 () -> userService.signIn(
                         "testlogin",
-                        "testpasswd"
+                        "testpasswd",
+                        "10.0.10.1"
                 )
         );
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock).validatePassword("testpasswd");
         verify(dataAccessMock).getUser("testlogin");
-
         assertEquals(UserService.USER_DOES_NOT_EXIST, thrown.getMessage());
     }
 
@@ -286,11 +210,18 @@ public class UserServiceTest {
                 )
         );
 
+        when(dateTimeMock.getDate()).thenReturn(new Date(123));
         when(encryptionMock.calculateSHA512(anyString(), anyString())).thenReturn("testpasswordhash");
+
+        try {
+            when(logServiceMock.checkUserIP(any(), any(), any())).thenReturn(false);
+        } catch (UserService.UserAccountException e) {
+            e.printStackTrace();
+        }
 
         User user = null;
         try {
-            user = userService.signIn("testlogin", "testpass");
+            user = userService.signIn("testlogin", "testpass", "10.0.10.1");
         } catch (UserService.UserAccountException e) {
             fail("Unexpected exception");
         }
@@ -316,11 +247,18 @@ public class UserServiceTest {
                 )
         );
 
+        when(dateTimeMock.getDate()).thenReturn(new Date(123));
         when(encryptionMock.calculateHMAC(anyString(), anyString())).thenReturn("testpasswordhash");
+
+        try {
+            when(logServiceMock.checkUserIP(any(), any(), any())).thenReturn(false);
+        } catch (UserService.UserAccountException e) {
+            e.printStackTrace();
+        }
 
         User user = null;
         try {
-            user = userService.signIn("testlogin", "testpass");
+            user = userService.signIn("testlogin", "testpass", "10.0.10.1");
         } catch (UserService.UserAccountException e) {
             fail("Unexpected exception: " + e.getMessage());
         }
@@ -346,13 +284,21 @@ public class UserServiceTest {
                 )
         );
 
+        when(dateTimeMock.getDate()).thenReturn(new Date(123));
         when(encryptionMock.calculateHMAC(anyString(), anyString())).thenReturn("testpasswordhash");
+
+        try {
+            when(logServiceMock.checkUserIP(any(), any(), any())).thenReturn(false);
+        } catch (UserService.UserAccountException e) {
+            e.printStackTrace();
+        }
 
         UserService.UserAccountException thrown = assertThrows(
                 UserService.UserAccountException.class,
                 () -> userService.signIn(
                         "testlogin",
-                        "testpass"
+                        "testpass",
+                        "10.0.10.1"
                 )
         );
 
@@ -567,4 +513,187 @@ public class UserServiceTest {
         assertEquals(UserService.COULD_NOT_CREATE, thrown.getMessage());
     }
 
+    @Test
+    public void updatePassword_ReturnsNewSHA512Password_IfPasswordUpdated() {
+        User user = new User(
+                1,
+                "userLogin",
+                Encryption.SHA512,
+                "testpasswordhash", "testsalt"
+        );
+
+        String oldPassword = "testMasterPassword";
+        String newPassword = "testNewMasterPassword";
+        String currentMasterPassword = "testMasterPassword";
+
+        when(validationMock.validatePassword(anyString())).thenReturn("");
+        when(encryptionMock.generateSalt64()).thenReturn("testSalt");
+        when(encryptionMock.calculateSHA512(anyString(), anyString())).thenReturn("testSha512Hash");
+        when(
+                dataAccessMock.updateUserMasterPassword(
+                        user.getId(), "testSha512Hash", "testSalt"
+                )
+        ).thenReturn(true);
+
+        String resultPassword = "";
+
+        try {
+            resultPassword = userService.updatePassword(user, oldPassword, newPassword, currentMasterPassword);
+        } catch (UserService.UserAccountException e) {
+            e.printStackTrace();
+        }
+
+        verify(validationMock).validatePassword(oldPassword);
+        verify(validationMock).validatePassword(newPassword);
+        verify(encryptionMock).generateSalt64();
+        verify(encryptionMock).calculateSHA512(newPassword, "testSalt");
+        verify(dataAccessMock).updateUserMasterPassword(user.getId(), "testSha512Hash", "testSalt");
+
+        assertEquals(newPassword, resultPassword);
+    }
+
+    @Test
+    public void updatePassword_ThrowsUserAccountException_IfPasswordCouldNotBeUpdated() {
+        User user = new User(
+                1,
+                "userLogin",
+                Encryption.SHA512,
+                "testpasswordhash", "testsalt"
+        );
+
+        String oldPassword = "testMasterPassword";
+        String newPassword = "testNewMasterPassword";
+        String currentMasterPassword = "testMasterPassword";
+
+        when(validationMock.validatePassword(anyString())).thenReturn("");
+        when(encryptionMock.generateSalt64()).thenReturn("testSalt");
+        when(encryptionMock.calculateSHA512(anyString(), anyString())).thenReturn("testSha512Hash");
+
+        when(
+                dataAccessMock.updateUserMasterPassword(
+                        user.getId(), "testSha512Hash", "testSalt"
+                )
+        ).thenReturn(false);
+
+        UserService.UserAccountException thrown = assertThrows(
+                UserService.UserAccountException.class,
+                () -> userService.updatePassword(user, oldPassword, newPassword, currentMasterPassword)
+        );
+
+        verify(validationMock).validatePassword(oldPassword);
+        verify(validationMock).validatePassword(newPassword);
+        verify(encryptionMock).generateSalt64();
+        verify(encryptionMock).calculateSHA512(newPassword, "testSalt");
+        verify(dataAccessMock).updateUserMasterPassword(user.getId(), "testSha512Hash", "testSalt");
+
+        assertEquals("Could not change user's password", thrown.getMessage());
+    }
+
+    @Test
+    public void updatePassword_ReturnsNewHmacPassword_IfPasswordUpdated() {
+        User user = new User(
+                1,
+                "userLogin",
+                Encryption.HMAC_SHA512,
+                "testpasswordhash", "testsalt"
+        );
+
+        String oldPassword = "testMasterPassword";
+        String newPassword = "testNewMasterPassword";
+        String currentMasterPassword = "testMasterPassword";
+
+        when(validationMock.validatePassword(anyString())).thenReturn("");
+        when(encryptionMock.generateSalt64()).thenReturn("testSalt");
+        when(encryptionMock.calculateHMAC(anyString(), anyString())).thenReturn("testHmacHash");
+        when(
+                dataAccessMock.updateUserMasterPassword(
+                        user.getId(), "testHmacHash", "testSalt"
+                )
+        ).thenReturn(true);
+
+        String resultPassword = "";
+
+        try {
+            resultPassword = userService.updatePassword(user, oldPassword, newPassword, currentMasterPassword);
+        } catch (UserService.UserAccountException e) {
+            e.printStackTrace();
+        }
+
+        verify(validationMock).validatePassword(oldPassword);
+        verify(validationMock).validatePassword(newPassword);
+        verify(encryptionMock).generateSalt64();
+        verify(encryptionMock).calculateHMAC(newPassword, "testSalt");
+        verify(dataAccessMock).updateUserMasterPassword(user.getId(), "testHmacHash", "testSalt");
+
+        assertEquals(newPassword, resultPassword);
+    }
+
+    @Test
+    public void updatePassword_ThrowsUserAccountException_IfOldPasswordValidationFailed() {
+        when(validationMock.validatePassword(anyString())).thenReturn(Validation.PASSWORD_CANT_BE_EMPTY);
+
+        UserService.UserAccountException thrown = assertThrows(
+                UserService.UserAccountException.class,
+                () -> userService.updatePassword(new User(), "", "testp1", "testp2")
+        );
+
+        verify(validationMock).validatePassword("");
+        verifyNoMoreInteractions(validationMock);
+        assertEquals(Validation.PASSWORD_CANT_BE_EMPTY, thrown.getMessage());
+    }
+
+    @Test
+    public void updatePassword_ThrowsUserAccountException_IfNewPasswordValidationFailed() {
+        when(
+                validationMock.validatePassword(anyString())
+        ).thenReturn("").thenReturn(Validation.PASSWORD_CANT_BE_LONGER_THAN);
+
+        UserService.UserAccountException thrown = assertThrows(
+                UserService.UserAccountException.class,
+                () -> userService.updatePassword(new User(), "testp1", "invalidTestPass", "")
+        );
+
+        verify(validationMock).validatePassword("testp1");
+        verify(validationMock).validatePassword("invalidTestPass");
+        verifyNoMoreInteractions(validationMock);
+        assertEquals(Validation.PASSWORD_CANT_BE_LONGER_THAN, thrown.getMessage());
+    }
+
+    @Test
+    public void updatePassword_ThrowsUserAccountException_IfPasswordsAreTheSame() {
+        when(validationMock.validatePassword(anyString())).thenReturn("");
+
+        UserService.UserAccountException thrown = assertThrows(
+                UserService.UserAccountException.class,
+                () -> userService.updatePassword(
+                        new User(),
+                        "testpassword",
+                        "testpassword",
+                        ""
+                )
+        );
+
+        verify(validationMock, times(2)).validatePassword("testpassword");
+        verifyNoMoreInteractions(validationMock);
+        assertEquals("New password is the same as the current one.", thrown.getMessage());
+    }
+
+    @Test
+    public void updatePassword_ThrowsUserAccountException_IfUserPasswordIncorrect() {
+        when(validationMock.validatePassword(anyString())).thenReturn("");
+
+        UserService.UserAccountException thrown = assertThrows(
+                UserService.UserAccountException.class,
+                () -> userService.updatePassword(
+                        new User(),
+                        "testpassword",
+                        "testnewpassword",
+                        "masterpassw"
+                )
+        );
+
+        verify(validationMock).validatePassword("testpassword");
+        verify(validationMock).validatePassword("testnewpassword");
+        assertEquals("Incorrect user password", thrown.getMessage());
+    }
 }

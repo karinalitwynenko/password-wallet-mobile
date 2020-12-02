@@ -6,13 +6,16 @@ import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
 
+import androidx.annotation.Nullable;
+
 public class DataAccess {
     private static SQLiteDatabase database;
     private static final DataAccess instance = new DataAccess();
     /** database table names */
     static final String USER_TABLE = "users";
     static final String PASSWORD_TABLE = "passwords";
-
+    static final String LOGIN_LOG_TABLE = "login_log";
+    static final String BLOCKED_IPS_TABLE = "blocked_ips";
     private ContentValues contentValues = new ContentValues();
 
     public static DataAccess getInstance() {
@@ -185,6 +188,109 @@ public class DataAccess {
         database.setTransactionSuccessful();
         database.endTransaction();
         return true;
+    }
+
+    public boolean createLoginLog(long userID, String ipAddress, long loginTime, String loginResult) {
+        contentValues.clear();
+        contentValues.put(LoginLog.USER_ID, userID);
+        contentValues.put(LoginLog.IP_ADDRESS, ipAddress);
+        contentValues.put(LoginLog.LOGIN_TIME, loginTime);
+        contentValues.put(LoginLog.LOGIN_RESULT, loginResult);
+
+        long logID = database.insert(LOGIN_LOG_TABLE, null, contentValues);
+
+        if(logID != -1)
+            return true;
+        else
+            return false;
+    }
+
+    public ArrayList<LoginLog> getLoginLogs(long userID, @Nullable String ipAddress, int limit) {
+        Cursor cursor;
+        String queryLimit;
+        if(limit != -1)
+            queryLimit = " limit " + limit;
+        else
+            queryLimit = "";
+
+        if(ipAddress != null) {
+                cursor = database.rawQuery(
+                "select * from " + LOGIN_LOG_TABLE
+                        + " where " + LoginLog.USER_ID + "=? and " + LoginLog.IP_ADDRESS + "=? "
+                        + " order by " + LoginLog.LOG_ID + " desc " + queryLimit,
+                    new String[] {userID + "", ipAddress}
+                );
+        }
+        else {
+            cursor = database.rawQuery(
+                    "select * from " + LOGIN_LOG_TABLE
+                            + " where " + LoginLog.USER_ID + "=?"
+                            + " order by " + LoginLog.LOG_ID + " desc " + queryLimit,
+                    new String[] {userID + ""}
+            );
+        }
+
+        ArrayList<LoginLog> logs = new ArrayList<>();
+
+        while(cursor.moveToNext()) {
+            logs.add(
+                    new LoginLog(
+                            cursor.getLong(cursor.getColumnIndex(LoginLog.LOG_ID)),
+                            cursor.getLong(cursor.getColumnIndex(LoginLog.USER_ID)),
+                            cursor.getString(cursor.getColumnIndex(LoginLog.IP_ADDRESS)),
+                            cursor.getLong(cursor.getColumnIndex(LoginLog.LOGIN_TIME)),
+                            cursor.getString(cursor.getColumnIndex(LoginLog.LOGIN_RESULT)),
+                            cursor.getInt(cursor.getColumnIndex(LoginLog.IGNORE_FAIL))
+                    )
+            );
+        }
+
+        return logs;
+    }
+
+    public boolean createBlockedIP(long userID, String ipAddress) {
+        contentValues.clear();
+        contentValues.put(LoginLog.USER_ID, userID);
+        contentValues.put(LoginLog.IP_ADDRESS, ipAddress);
+
+        long id = database.insert(BLOCKED_IPS_TABLE, null, contentValues);
+
+        if(id != -1)
+            return true;
+        else
+            return false;
+    }
+
+    public ArrayList<String> getBlockedIPs(long userID) {
+        Cursor cursor = database.rawQuery(
+                "select ip_address from " + BLOCKED_IPS_TABLE
+                        + " where user_id = ?",
+                new String[] {userID + ""}
+        );
+
+        ArrayList<String> ips = new ArrayList<>();
+        while(cursor.moveToNext()) {
+            ips.add(cursor.getString(0));
+        }
+
+        return ips;
+    }
+
+    public boolean deleteBlockedIP(String ipAddress) {
+        database.beginTransaction();
+        if(database.delete(BLOCKED_IPS_TABLE, "ip_address = ?", new String[] {ipAddress}) > 0) {
+            contentValues.clear();
+            contentValues.put(LoginLog.IGNORE_FAIL, 1);
+
+            if(database.update(LOGIN_LOG_TABLE, contentValues, "ip_address = ?", new String[] {ipAddress}) > 0) {
+                database.setTransactionSuccessful();
+                database.endTransaction();
+                return true;
+            }
+        }
+
+        database.endTransaction();
+        return false;
     }
 
     /** Closes the database connection */

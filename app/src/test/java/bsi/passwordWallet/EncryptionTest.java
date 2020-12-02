@@ -11,7 +11,6 @@ public class EncryptionTest {
     @Before
     public void setUp() {
         encryption = new Encryption();
-        System.out.println("setup");
     }
 
     @Test

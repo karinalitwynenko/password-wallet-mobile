@@ -7,12 +7,12 @@ public class Validation {
     static final int PASSWORD_MAX_LENGTH = 30;
     static final int WEBSITE_MAX_LENGTH = 300;
 
-    static final String PASSWORD_CANT_BE_EMPTY = "Password can't be empty";
-    static final String PASSWORD_CANT_BE_LONGER_THAN = "Password can't be longer than %d characters";
-    static final String LOGIN_CANT_BE_EMPTY = "Login can't be empty";
-    static final String LOGIN_CANT_BE_LONGER_THAN = "Login can't be longer than %d characters";
-    static final String WEBSITE_CANT_BE_EMPTY = "Website can't be empty";
-    static final String WEBSITE_CANT_BE_LONGER_THAN = "Website can't be longer than %d characters";
+    public static final String PASSWORD_CANT_BE_EMPTY = "Password can't be empty";
+    public static final String PASSWORD_CANT_BE_LONGER_THAN = "Password can't be longer than %d characters";
+    public static final String LOGIN_CANT_BE_EMPTY = "Login can't be empty";
+    public static final String LOGIN_CANT_BE_LONGER_THAN = "Login can't be longer than %d characters";
+    public static final String WEBSITE_CANT_BE_EMPTY = "Website can't be empty";
+    public static final String WEBSITE_CANT_BE_LONGER_THAN = "Website can't be longer than %d characters";
 
     @SuppressLint("DefaultLocale")
     public String validatePassword(String password) {
@@ -41,4 +41,5 @@ public class Validation {
             return String.format(WEBSITE_CANT_BE_LONGER_THAN, WEBSITE_MAX_LENGTH);
         else return "";
     }
+
 }

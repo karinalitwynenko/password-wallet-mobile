@@ -1,4 +1,4 @@
-package bsi.passwordWallet;
+package bsi.passwordWallet.services;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,7 +9,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import bsi.passwordWallet.services.PasswordService;
+import bsi.passwordWallet.DataAccess;
+import bsi.passwordWallet.Encryption;
+import bsi.passwordWallet.Password;
+import bsi.passwordWallet.User;
+import bsi.passwordWallet.Validation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

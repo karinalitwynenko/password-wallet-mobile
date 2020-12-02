@@ -14,7 +14,6 @@ import android.widget.Toast;
 import androidx.fragment.app.DialogFragment;
 import bsi.passwordWallet.R;
 import bsi.passwordWallet.User;
-import bsi.passwordWallet.Validation;
 import bsi.passwordWallet.services.UserService;
 
 public class UserAccountDialog extends DialogFragment {

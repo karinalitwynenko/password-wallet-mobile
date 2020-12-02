@@ -8,7 +8,7 @@ import java.io.File;
 
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
     Context context;
-    final static String DATABASE_NAME = "password-wallet.db";
+    public final static String DATABASE_NAME = "password-wallet.db";
 
     public DatabaseOpenHelper(Context context) {
         super(context, DATABASE_NAME, null, 1);
@@ -27,6 +27,27 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                         "encryption_type text not null, " +
                         "password_hash text not null, " +
                         "salt text not null" +
+                        ");"
+        );
+
+        db.execSQL(
+                "create table if not exists login_log (" +
+                        "log_id integer primary key autoincrement," +
+                        "user_id integer not null," +
+                        "ip_address text not null," +
+                        "login_time integer not null, " +
+                        "login_result text not null, " +
+                        "ignore_fail integer not null default 0," +
+                        "foreign key (user_id) references users (user_id)" +
+                        ");"
+        );
+
+        db.execSQL(
+                "create table if not exists blocked_ips (" +
+                        "blocked_ip_id integer primary key autoincrement," +
+                        "user_id integer not null," +
+                        "ip_address text not null," +
+                        "foreign key (user_id) references users (user_id)" +
                         ");"
         );
 

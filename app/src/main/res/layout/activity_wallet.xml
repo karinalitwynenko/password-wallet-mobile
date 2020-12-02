@@ -29,7 +29,7 @@
         android:paddingBottom="18dp"
         android:textColor="@color/dark_text"
         android:text="Website"
-        app:layout_constraintBottom_toTopOf="@id/passwordsListView"
+        app:layout_constraintBottom_toTopOf="@id/password_list"
         app:layout_constraintEnd_toStartOf="@+id/description_header"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
@@ -47,7 +47,7 @@
         android:paddingBottom="18dp"
         android:textColor="@color/dark_text"
         android:text="Description"
-        app:layout_constraintBottom_toTopOf="@id/passwordsListView"
+        app:layout_constraintBottom_toTopOf="@id/password_list"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/website_header"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
@@ -117,7 +117,7 @@
     </androidx.appcompat.widget.Toolbar>
 
     <ListView
-        android:id="@+id/passwordsListView"
+        android:id="@+id/password_list"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="4dp"

@@ -17,7 +17,6 @@ import bsi.passwordWallet.DatabaseOpenHelper;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.R;
 import bsi.passwordWallet.User;
-import bsi.passwordWallet.activities.WalletActivity;
 import bsi.passwordWallet.services.UserService;
 
 public class LoginActivity extends AppCompatActivity {
@@ -31,28 +30,37 @@ public class LoginActivity extends AppCompatActivity {
     TextView changeAction;
     TextView promptLabel;
 
+    TextView ipAddressLabel;
+    EditText ipAddressInput;
+
     View.OnClickListener changeActionListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            int visibility;
+            int singUpViewsVisibility;
+            int ipViewsVisibility;
             if(((TextView)v).getText().toString().equals(getString(R.string.sign_in))) {
-                visibility = View.GONE;
+                singUpViewsVisibility = View.GONE;
+                ipViewsVisibility = View.VISIBLE;
                 changeAction.setText(getString(R.string.sign_up));
                 promptLabel.setText(getString(R.string.do_not_have));
                 signInButton.setText(R.string.sign_in);
                 signInButton.setOnClickListener(signInListener);
             }
             else {
-                visibility = View.VISIBLE;
+                singUpViewsVisibility = View.VISIBLE;
+                ipViewsVisibility = View.GONE;
                 changeAction.setText(getString(R.string.sign_in));
                 promptLabel.setText(getString(R.string.already_have));
                 signInButton.setText(R.string.sign_up);
                 signInButton.setOnClickListener(signUpListener);
             }
 
-            confirmPasswordLabel.setVisibility(visibility);
-            confirmPasswordInput.setVisibility(visibility);
-            encryptionRadioGroup.setVisibility(visibility);
+            confirmPasswordLabel.setVisibility(singUpViewsVisibility);
+            confirmPasswordInput.setVisibility(singUpViewsVisibility);
+            encryptionRadioGroup.setVisibility(singUpViewsVisibility);
+
+            ipAddressLabel.setVisibility(ipViewsVisibility);
+            ipAddressInput.setVisibility(ipViewsVisibility);
         }
     };
 
@@ -83,11 +91,8 @@ public class LoginActivity extends AppCompatActivity {
 
             // check if the user was properly created
             if(user != null)
-                // call the method for signing in
-                signInListener.onClick(signInButton);
+                changeAction.performClick();
 
-            // call the method for signing in
-            signInListener.onClick(signInButton);
         }
     };
 
@@ -99,7 +104,8 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 user = new UserService().signIn(
                         loginInput.getText().toString(),
-                        password
+                        password,
+                        ipAddressInput.getText().toString()
                 );
             } catch (UserService.UserAccountException e) {
                 displayToast(e.getMessage());
@@ -135,13 +141,16 @@ public class LoginActivity extends AppCompatActivity {
         changeAction = findViewById(R.id.change_action_button);
         promptLabel = findViewById(R.id.prompt_label);
 
+        ipAddressLabel = findViewById(R.id.ip_label);
+        ipAddressInput = findViewById(R.id.ip_input);
+
         changeAction.setPaintFlags(changeAction.getPaintFlags()| Paint.UNDERLINE_TEXT_FLAG);
 
         // obscure the password input
         passwordInput.setTransformationMethod(new PasswordTransformationMethod());
 
         // uncomment this line for quick database deletion
-        //deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
+//        deleteDatabase(DatabaseOpenHelper.DATABASE_NAME);
 
         /* Make first call to the database. Create the database and tables if necessary. */
         DataAccess.initialize(new DatabaseOpenHelper(this).getWritableDatabase());

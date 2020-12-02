@@ -8,13 +8,14 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.MockitoRule;
 
 import java.util.ArrayList;
+
+import bsi.passwordWallet.services.LogService;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -23,9 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -305,4 +304,114 @@ public class DataAccessTest {
         verifyNoMoreInteractions(databaseMock);
         assertFalse(result);
     }
+
+    /**
+     * TDD
+     */
+    @Test
+    public void createLoginLog_ReturnsTrue_IfLogCreated() {
+        when(databaseMock.insert(anyString(), any(), any())).thenReturn(1L);
+        boolean result = dataAccess.createLoginLog(2L, "10.0.10.10", 123, LogService.LOGIN_SUCCESS);
+        verify(databaseMock).insert(DataAccess.LOGIN_LOG_TABLE, null, contentValuesMock);
+        assertTrue(result);
+    }
+
+    @Test
+    public void createLoginLog_ReturnsFalse_IfLogNotCreated() {
+        when(databaseMock.insert(anyString(), any(), any())).thenReturn(-1L);
+        boolean result = dataAccess.createLoginLog(1L, "10.0.10.10", 123, LogService.LOGIN_SUCCESS);
+        verify(databaseMock).insert(DataAccess.LOGIN_LOG_TABLE, null, contentValuesMock);
+        assertFalse(result);
+    }
+
+    @Test
+    public void getLoginLogs_ReturnsLogList_IfDataExists() {
+        Cursor cursor = mock(Cursor.class);
+
+        when(cursor.moveToNext()).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(cursor.getLong(anyInt())).thenReturn(1L);
+        when(cursor.getString(anyInt())).thenReturn("test");
+        when(cursor.getInt(anyInt())).thenReturn(1);
+        when(databaseMock.rawQuery(anyString(), any(String[].class))).thenReturn(cursor);
+
+        ArrayList<LoginLog> logs = dataAccess.getLoginLogs(1L, "10.0.10.10", 4);
+        assertNotNull(logs);
+        assertNotNull(logs.get(0));
+        assertNotNull(logs.get(1));
+        assertEquals(2, logs.size());
+    }
+
+    @Test
+    public void createBlockedIP_ReturnsTrue_IfBlockedIpCreated() {
+        when(databaseMock.insert(anyString(), any(), any())).thenReturn(1L);
+        boolean result = dataAccess.createBlockedIP(2L, "10.0.10.10");
+        verify(databaseMock).insert(DataAccess.BLOCKED_IPS_TABLE, null, contentValuesMock);
+        assertTrue(result);
+    }
+
+    @Test
+    public void createBlockedIP_ReturnsFalse_IfBlockedIpNotCreated() {
+        when(databaseMock.insert(anyString(), any(), any())).thenReturn(-1L);
+        boolean result = dataAccess.createBlockedIP(2L, "10.0.5.10");
+        verify(databaseMock).insert(DataAccess.BLOCKED_IPS_TABLE, null, contentValuesMock);
+        assertFalse(result);
+    }
+
+    @Test
+    public void getBlockedIPs_ReturnsIpList_IfDataExists() {
+        Cursor cursor = mock(Cursor.class);
+
+        when(cursor.moveToNext()).thenReturn(true).thenReturn(true).thenReturn(false);
+        when(cursor.getString(anyInt())).thenReturn("10.0.2.2");
+        when(databaseMock.rawQuery(anyString(), any(String[].class))).thenReturn(cursor);
+
+        ArrayList<String> ips = dataAccess.getBlockedIPs(1236L);
+        assertNotNull(ips);
+        assertNotNull(ips.get(0));
+        assertNotNull(ips.get(1));
+        assertEquals(2, ips.size());
+    }
+
+    @Test
+    public void deleteBlockedIP_UpdatesLogTableAndCommitsTransaction_IfBlockedIpDeletedSuccessfully() {
+        when(databaseMock.delete(anyString(), anyString(), any())).thenReturn(1);
+        when(databaseMock.update(any(), any(), any(), any())).thenReturn(1);
+
+        boolean result = dataAccess.deleteBlockedIP("10.0.10.10");
+        verify(databaseMock).beginTransaction();
+        verify(databaseMock).delete(DataAccess.BLOCKED_IPS_TABLE, "ip_address = ?", new String[] {"10.0.10.10"});
+        verify(databaseMock).update(DataAccess.LOGIN_LOG_TABLE, contentValuesMock, "ip_address = ?", new String[] {"10.0.10.10"});
+        verify(databaseMock).setTransactionSuccessful();
+        verify(databaseMock).endTransaction();
+        verifyNoMoreInteractions(databaseMock);
+        assertTrue(result);
+    }
+
+    @Test
+    public void deleteBlockedIP_RollsBackTransaction_IfBlockedIpDeletionFailed() {
+        when(databaseMock.delete(anyString(), anyString(), any())).thenReturn(-1);
+
+        boolean result = dataAccess.deleteBlockedIP("10.0.10.10");
+
+        verify(databaseMock).beginTransaction();
+        verify(databaseMock).delete(DataAccess.BLOCKED_IPS_TABLE, "ip_address = ?", new String[] {"10.0.10.10"});
+        verify(databaseMock).endTransaction();
+        verifyNoMoreInteractions(databaseMock);
+        assertFalse(result);
+    }
+
+    @Test
+    public void deleteBlockedIP_RollsBackTransaction_IfUpdatingLogTableFailed() {
+        when(databaseMock.delete(anyString(), anyString(), any())).thenReturn(1);
+        when(databaseMock.update(any(), any(), any(), any())).thenReturn(-1);
+        boolean result = dataAccess.deleteBlockedIP("10.0.10.10");
+
+        verify(databaseMock).beginTransaction();
+        verify(databaseMock).delete(DataAccess.BLOCKED_IPS_TABLE, "ip_address = ?", new String[] {"10.0.10.10"});
+        verify(databaseMock).update(DataAccess.LOGIN_LOG_TABLE, contentValuesMock, "ip_address = ?", new String[] {"10.0.10.10"});
+        verify(databaseMock).endTransaction();
+        verifyNoMoreInteractions(databaseMock);
+        assertFalse(result);
+    }
+
 }

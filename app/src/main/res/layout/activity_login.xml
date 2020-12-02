@@ -84,6 +84,7 @@
         android:maxLength="16"
         android:textColor="@android:color/white"
         android:textSize="16sp"
+        android:gravity="center"
         app:layout_constraintBottom_toTopOf="@+id/confirm_password_input"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -104,6 +105,7 @@
         android:maxLength="16"
         android:textColor="@android:color/white"
         android:textSize="16sp"
+        android:gravity="center"
         app:layout_constraintBottom_toTopOf="@+id/signin_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -156,6 +158,7 @@
         android:maxLength="16"
         android:textColor="@android:color/white"
         android:textSize="16sp"
+        android:gravity="center"
         app:layout_constraintBottom_toTopOf="@+id/password_input"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -166,7 +169,6 @@
         android:id="@+id/prompt_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="monospace"
         android:gravity="center"
         android:text="@string/do_not_have"
         android:textColor="@android:color/white"
@@ -184,7 +186,6 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginBottom="48dp"
-        android:fontFamily="monospace"
         android:gravity="center"
         android:text="@string/sign_up"
         android:textColor="@android:color/white"
@@ -240,5 +241,40 @@
             android:text="HMAC"
             android:textColor="@android:color/white" />
     </RadioGroup>
+
+    <EditText
+        android:id="@+id/ip_input"
+        android:layout_width="wrap_content"
+        android:layout_height="46dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@android:color/white"
+        android:ems="10"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:maxLength="16"
+        android:text="10.0.10.0"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/guideline"
+        app:layout_constraintTop_toBottomOf="@+id/signin_button" />
+
+    <TextView
+        android:id="@+id/ip_label"
+        android:layout_width="wrap_content"
+        android:layout_height="46dp"
+        android:layout_marginTop="16dp"
+        android:ems="6"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="IP address"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toStartOf="@+id/guideline"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/signin_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -10,4 +10,6 @@
     <string name="already_have">Already have an account?</string>
     <string name="do_not_have">Don\'t have an account?</string>
 
+    <string name="change_password"><u>Change password</u></string>
+
 </resources>

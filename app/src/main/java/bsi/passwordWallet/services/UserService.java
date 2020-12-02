@@ -1,6 +1,7 @@
 package bsi.passwordWallet.services;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
@@ -13,14 +14,29 @@ public class UserService {
     public final static String PASSWORDS_DO_NOT_MATCH = "Passwords don't match";
     public final static String LOGIN_EXISTS = "Login already exists";
     public final static String COULD_NOT_CREATE = "Couldn't create user's account";
+
+    static final String IP_ADDRESS_CANT_BE_EMPTY = "IP address can't be empty";
+
     private DataAccess dataAccess = DataAccess.getInstance();
     private Validation validation = new Validation();
     private Encryption encryption = new Encryption();
+    private LogService logService = new LogService();
+
+    private DateTime dateTime = new DateTime() {
+        @Override
+        public Date getDate() {
+            return new Date();
+        }
+    };
 
     public static class UserAccountException extends Exception {
         UserAccountException(String message){
             super(message);
         }
+    }
+
+    interface DateTime {
+        Date getDate();
     }
 
     public String updatePassword(User user, String oldPassword, String newPassword, String masterPassword) throws UserAccountException {
@@ -55,7 +71,7 @@ public class UserService {
             throw new UserAccountException("Could not change user's password");
     }
 
-    public User signIn(String login, String password) throws UserAccountException {
+    public User signIn(String login, String password, String ipAddress) throws UserAccountException {
         String validationResult = validation.validateLogin(login);
         // check if the login has invalid format
         if(!validationResult.isEmpty())
@@ -66,24 +82,48 @@ public class UserService {
         if(!validationResult.isEmpty())
             throw new UserAccountException(validationResult);
 
-         // try to get user with provided login
+        if(ipAddress.isEmpty())
+            throw new UserAccountException(IP_ADDRESS_CANT_BE_EMPTY);
+
+        // try to get user with provided login
         User user = dataAccess.getUser(login);
         // check if the user was found
         if(user == null)
             throw new UserAccountException(USER_DOES_NOT_EXIST);
 
-        String hash;
+        Date currentLoginDate = dateTime.getDate();
 
+        /*
+        ***********************
+            user account check
+        ***********************/
+        logService.checkUserAccount(user, currentLoginDate);
+
+        /*
+        ***********************
+            ip check
+        ***********************/
+        boolean ipShouldBeBanned = logService.checkUserIP(user, ipAddress, currentLoginDate);
+
+        String hash;
         if(user.getEncryptionMethod().equals(Encryption.SHA512))
             hash = encryption.calculateSHA512(password, user.getSalt());
         else
             hash = encryption.calculateHMAC(password, user.getSalt());
 
         // check if provided password is valid
-        if(!hash.equals(user.getPassword()))
+        if(!hash.equals(user.getPassword())) {
+            dataAccess.createLoginLog(user.getId(), ipAddress, currentLoginDate.getTime(), LogService.LOGIN_FAIL);
+
+            if(ipShouldBeBanned)
+                dataAccess.createBlockedIP(user.getId(), ipAddress); // block the address
+
             throw new UserAccountException(INCORRECT_PASSWORD);
-        else
+        }
+        else {
+            dataAccess.createLoginLog(user.getId(), ipAddress, currentLoginDate.getTime(), LogService.LOGIN_SUCCESS);
             return user;
+        }
     }
 
     public User signUp(String login, String password, String confirmPassword, String encryptionMethod) throws UserAccountException {
@@ -128,4 +168,5 @@ public class UserService {
         else
             return user;
     }
+
 }
