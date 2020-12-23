@@ -141,7 +141,7 @@ public class LogServiceTest {
     }
 
     @Test
-    public void checkUserIP_ReturnsFalse_IfFailSequenceLengthLesserThan3AndTimeBlockadePassed() {
+    public void checkUserIP_ReturnsFalse_IfFailSequenceLengthLessThan3AndTimeBlockadePassed() {
         User user = new User(
                 1,
                 "userLogin",

@@ -2,11 +2,13 @@ package bsi.passwordWallet.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
@@ -24,12 +27,14 @@ import bsi.passwordWallet.User;
 import bsi.passwordWallet.services.PasswordService;
 
 public class WalletActivity extends AppCompatActivity {
-    ListView passwordsListView;
-    ArrayList<Password> passwords;
-    PasswordAdapter passwordAdapter;
-    User user;
-    String userPassword;
-    byte[] userPasswordHash;  // stored as MD5 hash
+    private ListView passwordsListView;
+    private ArrayList<Password> passwords;
+    private PasswordAdapter passwordAdapter;
+    private User user;
+    private String userPassword;
+    private byte[] userPasswordHash;  // stored as MD5 hash
+
+    private SwitchCompat editModeSwitch;
 
     static class PasswordAdapter extends ArrayAdapter<Password> {
         private final ArrayList<Password> dataSet;
@@ -41,10 +46,8 @@ public class WalletActivity extends AppCompatActivity {
 
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            // get the data item for position
             Password password = getItem(position);
 
-            // check if the view is being reused
             if (convertView == null) {
                 LayoutInflater inflater = LayoutInflater.from(getContext());
                 convertView = inflater.inflate(R.layout.wallet_item, parent, false);
@@ -144,7 +147,24 @@ public class WalletActivity extends AppCompatActivity {
         }
 
         passwordsListView = findViewById(R.id.password_list);
+        editModeSwitch = findViewById(R.id.switch_edit_mode);
         passwords = DataAccess.getInstance().getPasswords(user.getId());
+
+        editModeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked) {
+                    TextView tv = findViewById(R.id.read_only_label);
+                    tv.setTypeface(null, Typeface.NORMAL);
+                    tv.setTextColor(getColor(android.R.color.primary_text_dark));
+                }
+                else {
+                    TextView tv = findViewById(R.id.edit_mode_label);
+                    tv.setTypeface(null, Typeface.BOLD);
+                    tv.setTextColor(getColor(R.color.colorAccent));
+                }
+            }
+        });
 
         passwordAdapter = new PasswordAdapter(passwords, this);
         passwordsListView.setOnItemClickListener((parent, view, position, id) -> {
