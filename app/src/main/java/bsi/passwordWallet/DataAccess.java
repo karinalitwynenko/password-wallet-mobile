@@ -16,6 +16,8 @@ public class DataAccess {
     static final String PASSWORD_TABLE = "passwords";
     static final String LOGIN_LOG_TABLE = "login_log";
     static final String BLOCKED_IPS_TABLE = "blocked_ips";
+    static final String SHARED_PASSWORDS_TABLE = "shared_passwords";
+
     private ContentValues contentValues = new ContentValues();
 
     public static DataAccess getInstance() {
@@ -297,4 +299,15 @@ public class DataAccess {
     public static void close() {
         database.close();
     }
+
+    public boolean addSharedPassword(long passwordId, long partOwnerId) {
+        contentValues.clear();
+        contentValues.put("password_id", passwordId);
+        contentValues.put( "part_owner_id", partOwnerId);
+
+        long sharedPasswordId = database.insert(SHARED_PASSWORDS_TABLE, null, contentValues);
+
+        return sharedPasswordId != -1;
+    }
+
 }

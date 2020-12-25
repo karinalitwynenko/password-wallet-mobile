@@ -17,7 +17,7 @@
     </style>
 
     <style name="text_input">
-        <item name="android:ems">10</item>
+        <item name="android:ems">8</item>
         <item name="android:fontFamily">monospace</item>
         <item name="android:textColor">@color/dark_text</item>
         <item name="android:textSize">16sp</item>

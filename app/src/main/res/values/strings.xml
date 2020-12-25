@@ -12,4 +12,7 @@
 
     <string name="change_master_password"><u>Change master password</u></string>
 
+    <string name="edit_mode_enabled">Edit mode</string>
+    <string name="ready_only">Read only</string>
+
 </resources>

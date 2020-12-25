@@ -63,6 +63,16 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                         "foreign key (user_id) references users (user_id)" +
                         ");"
         );
+
+        db.execSQL(
+                "create table if not exists shared_passwords (" +
+                        "shared_password_id integer primary key autoincrement, " +
+                        "password_id not null, " +
+                        "part_owner_id not null, " +
+                        "foreign key (password_id) references passwords (password_id)," +
+                        "foreign key (part_owner_id) references users (user_id)" +
+                        ");"
+        );
     }
 
     @Override

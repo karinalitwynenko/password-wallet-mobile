@@ -27,6 +27,11 @@
             android:name=".activities.UserAccountActivity"
             android:launchMode="singleTask" >
         </activity>
+
+        <activity
+            android:name=".activities.PasswordDetailsActivity"
+            android:launchMode="singleTask" >
+        </activity>
     </application>
 
 </manifest>

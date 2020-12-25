@@ -75,4 +75,14 @@ public class PasswordService {
         return dataAccess.updatePasswords(passwords);
     }
 
+    public String sharePassword(long passwordId, String partOwnerLogin) {
+        User partOwner = dataAccess.getUser(partOwnerLogin);
+        if(partOwner == null)
+            return "User does not exist";
+        else if(dataAccess.addSharedPassword(passwordId, partOwner.getId()))
+            return "Password has been shared";
+        else
+            return "Could not share the password";
+    }
+
 }

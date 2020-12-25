@@ -8,10 +8,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -34,7 +37,7 @@ public class WalletActivity extends AppCompatActivity {
     private String userPassword;
     private byte[] userPasswordHash;  // stored as MD5 hash
 
-    private SwitchCompat editModeSwitch;
+    private boolean editModeEnabled;
 
     static class PasswordAdapter extends ArrayAdapter<Password> {
         private final ArrayList<Password> dataSet;
@@ -137,6 +140,8 @@ public class WalletActivity extends AppCompatActivity {
             finish();
         }
 
+        editModeEnabled = false;
+
         TextView userButton = findViewById(R.id.user_button);
 
         if(getIntent().getExtras() != null) {
@@ -147,32 +152,39 @@ public class WalletActivity extends AppCompatActivity {
         }
 
         passwordsListView = findViewById(R.id.password_list);
-        editModeSwitch = findViewById(R.id.switch_edit_mode);
+        Button editModeToggle = findViewById(R.id.edit_mode_toggle);
         passwords = DataAccess.getInstance().getPasswords(user.getId());
 
-        editModeSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        editModeToggle.setOnClickListener(new View.OnClickListener() {
+
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked) {
-                    TextView tv = findViewById(R.id.read_only_label);
-                    tv.setTypeface(null, Typeface.NORMAL);
-                    tv.setTextColor(getColor(android.R.color.primary_text_dark));
+            public void onClick(View view) {
+                TextView tv = (TextView)view;
+                if(editModeEnabled) {
+                    tv.setText(R.string.ready_only);
+                    tv.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_baseline_lock_24, 0, 0, 0);
+                    editModeEnabled = false;
                 }
                 else {
-                    TextView tv = findViewById(R.id.edit_mode_label);
-                    tv.setTypeface(null, Typeface.BOLD);
-                    tv.setTextColor(getColor(R.color.colorAccent));
+                    tv.setText(R.string.edit_mode_enabled);
+                    tv.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_baseline_lock_open_24, 0, 0, 0);
+                    editModeEnabled = true;
                 }
             }
         });
 
         passwordAdapter = new PasswordAdapter(passwords, this);
+
         passwordsListView.setOnItemClickListener((parent, view, position, id) -> {
+//            Intent intent = new Intent(getApplicationContext(), PasswordDetailsActivity.class);
+//            intent.putExtra("password", passwords.get(position));
+//
+//            startActivity(intent);
             PasswordDetailsDialog dialog =
                     (PasswordDetailsDialog)getSupportFragmentManager().findFragmentByTag("PasswordDetails");
             if(dialog == null) {
                 dialog = new PasswordDetailsDialog(
-                        passwords.get(position), userPasswordHash, passwordDeletedListener
+                        passwords.get(position), userPasswordHash, passwordDeletedListener, editModeEnabled
                 );
                 dialog.show(getSupportFragmentManager(), "PasswordDetails");
             }
@@ -207,4 +219,5 @@ public class WalletActivity extends AppCompatActivity {
             }
         });
     }
+
 }

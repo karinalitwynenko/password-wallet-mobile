@@ -1,6 +1,8 @@
 package bsi.passwordWallet;
 
-public class Password {
+import java.io.Serializable;
+
+public class Password implements Serializable {
     public static final String PASSWORD_ID = "password_id";
     public static final String USER_ID = "user_id";
     public static final String LOGIN = "login";
