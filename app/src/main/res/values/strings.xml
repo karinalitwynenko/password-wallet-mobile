@@ -15,4 +15,8 @@
     <string name="edit_mode_enabled">Edit mode</string>
     <string name="ready_only">Read only</string>
 
+    <string name="shared_with">This password is shared with:</string>
+    <string name="belongs_to">This password belongs to:</string>
+
+
 </resources>

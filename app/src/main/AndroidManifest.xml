@@ -20,7 +20,7 @@
 
         <activity
             android:name=".activities.WalletActivity"
-            android:launchMode="singleTask" >
+            android:launchMode="singleTask">
         </activity>
 
         <activity

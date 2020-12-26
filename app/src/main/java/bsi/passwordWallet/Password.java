@@ -31,6 +31,10 @@ public class Password implements Serializable {
         return id;
     }
 
+    public long getUserId() {
+        return userId;
+    }
+
     public String getLogin() {
         return login;
     }

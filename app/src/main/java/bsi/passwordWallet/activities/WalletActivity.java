@@ -2,27 +2,22 @@ package bsi.passwordWallet.activities;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.Objects;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
-import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
 import bsi.passwordWallet.R;
@@ -35,7 +30,7 @@ public class WalletActivity extends AppCompatActivity {
     private PasswordAdapter passwordAdapter;
     private User user;
     private String userPassword;
-    private byte[] userPasswordHash;  // stored as MD5 hash
+    private byte[] userPasswordHash;  // MD5 hash
 
     private boolean editModeEnabled;
 
@@ -115,7 +110,7 @@ public class WalletActivity extends AppCompatActivity {
             }
             else {
                 // reload the passwords from the database
-                passwords = DataAccess.getInstance().getPasswords(user.getId());
+                passwords = passwordService.getPasswords(user.getId());
                 Toast.makeText(
                         getApplicationContext(),
                         "Failed to update user's password",
@@ -153,7 +148,10 @@ public class WalletActivity extends AppCompatActivity {
 
         passwordsListView = findViewById(R.id.password_list);
         Button editModeToggle = findViewById(R.id.edit_mode_toggle);
-        passwords = DataAccess.getInstance().getPasswords(user.getId());
+
+        passwords = new PasswordService().getPasswords(user.getId());
+        passwordAdapter = new PasswordAdapter(passwords, this);
+        passwordsListView.setAdapter(passwordAdapter);
 
         editModeToggle.setOnClickListener(new View.OnClickListener() {
 
@@ -173,24 +171,15 @@ public class WalletActivity extends AppCompatActivity {
             }
         });
 
-        passwordAdapter = new PasswordAdapter(passwords, this);
-
         passwordsListView.setOnItemClickListener((parent, view, position, id) -> {
-//            Intent intent = new Intent(getApplicationContext(), PasswordDetailsActivity.class);
-//            intent.putExtra("password", passwords.get(position));
-//
-//            startActivity(intent);
-            PasswordDetailsDialog dialog =
-                    (PasswordDetailsDialog)getSupportFragmentManager().findFragmentByTag("PasswordDetails");
-            if(dialog == null) {
-                dialog = new PasswordDetailsDialog(
-                        passwords.get(position), userPasswordHash, passwordDeletedListener, editModeEnabled
-                );
-                dialog.show(getSupportFragmentManager(), "PasswordDetails");
-            }
-        });
+            Intent intent = new Intent(getApplicationContext(), PasswordDetailsActivity.class);
+            intent.putExtra("password", passwords.get(position));
+            intent.putExtra("userMasterPassword", userPasswordHash);
+            intent.putExtra("editModeEnabled", editModeEnabled);
+            intent.putExtra("user", user);
 
-        passwordsListView.setAdapter(passwordAdapter);
+            startActivity(intent);
+        });
 
         findViewById(R.id.add_new_password).setOnClickListener(v -> {
             AddPasswordDialog dialog =
@@ -204,7 +193,7 @@ public class WalletActivity extends AppCompatActivity {
         userButton.setOnClickListener(v -> {
             Intent intent = new Intent(getApplicationContext(), UserAccountActivity.class);
             intent.putExtra("user", user);
-            startActivity(intent);
+            startActivityForResult(intent, 0);
         });
 
         findViewById(R.id.change_master_password).setOnClickListener(new View.OnClickListener() {
@@ -218,6 +207,13 @@ public class WalletActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        passwords = new PasswordService().getPasswords(user.getId());
+        passwordAdapter.notifyDataSetChanged();
     }
 
 }

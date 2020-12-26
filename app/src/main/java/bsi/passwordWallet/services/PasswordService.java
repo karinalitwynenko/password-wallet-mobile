@@ -75,14 +75,30 @@ public class PasswordService {
         return dataAccess.updatePasswords(passwords);
     }
 
-    public String sharePassword(long passwordId, String partOwnerLogin) {
+    public String sharePassword(Password password, String partOwnerLogin) {
         User partOwner = dataAccess.getUser(partOwnerLogin);
         if(partOwner == null)
             return "User does not exist";
-        else if(dataAccess.addSharedPassword(passwordId, partOwner.getId()))
+        else if(partOwner.getId() == password.getUserId())
+            return "There is no need to share the password with yourself.";
+
+        // check if the password is already shared with the user
+        for(Password p : dataAccess.getSharedPasswords(partOwner.getId())) {
+            if(p.getId() == password.getId())
+                return "This user already has the access to the password.";
+        }
+
+        if(dataAccess.addSharedPassword(password.getId(), partOwner.getId()))
             return "Password has been shared";
         else
             return "Could not share the password";
+    }
+
+    public ArrayList<Password> getPasswords(long userId) {
+        ArrayList<Password> passwords = dataAccess.getPasswords(userId);
+        passwords.addAll(dataAccess.getSharedPasswords(userId));
+
+        return passwords;
     }
 
 }

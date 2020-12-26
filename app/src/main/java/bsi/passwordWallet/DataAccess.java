@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class DataAccess {
@@ -104,6 +105,7 @@ public class DataAccess {
      * @param userID id of user for whom passwords should be retrieved
      * @return ArrayList of Password objects
      */
+    @NonNull
     public ArrayList<Password> getPasswords(long userID) {
         Cursor cursor = database.rawQuery(
                 "select * from " + PASSWORD_TABLE + " where user_id = ?",
@@ -308,6 +310,76 @@ public class DataAccess {
         long sharedPasswordId = database.insert(SHARED_PASSWORDS_TABLE, null, contentValues);
 
         return sharedPasswordId != -1;
+    }
+
+    /**
+     * Gets passwords that have been shared with user with specified id
+     * @param userId
+     * @return list of passwords shared with the user - empty if no passwords found
+     */
+    @NonNull
+    public ArrayList<Password> getSharedPasswords(long userId) {
+        ArrayList<Password> passwords = new ArrayList<>();
+
+        String sql = "select p.* from " + PASSWORD_TABLE + " p inner join " + SHARED_PASSWORDS_TABLE
+                + " sp on sp.password_id = p.password_id where sp.part_owner_id = " + userId;
+
+        Cursor cursor = database.rawQuery(sql, null);
+
+        if(cursor.getCount() > 0) {
+            while(cursor.moveToNext()) {
+                passwords.add(
+                        new Password(
+                                cursor.getLong(cursor.getColumnIndex(Password.PASSWORD_ID)),
+                                cursor.getLong(cursor.getColumnIndex(Password.USER_ID)),
+                                cursor.getString(cursor.getColumnIndex(Password.LOGIN)),
+                                cursor.getString(cursor.getColumnIndex(Password.PASSWORD)),
+                                cursor.getString(cursor.getColumnIndex(Password.IV)),
+                                cursor.getString(cursor.getColumnIndex(Password.WEBSITE)),
+                                cursor.getString(cursor.getColumnIndex(Password.DESCRIPTION))
+                        )
+                );
+            }
+        }
+
+        return passwords;
+    }
+
+    @NonNull
+    public ArrayList<String> getPartOwners(long passwordId) {
+        ArrayList<String> userLogins = new ArrayList<>();;
+
+        String sql = "select u.login from " + SHARED_PASSWORDS_TABLE + " sp inner join " + PASSWORD_TABLE
+                + " p on sp.password_id = p.password_id inner join " + USER_TABLE +
+                " u on u.user_id = sp.part_owner_id where p.password_id = ?";
+
+        Cursor cursor = database.rawQuery(sql, new String[] {passwordId + ""});
+
+        if(cursor.getCount() > 0) {
+            while(cursor.moveToNext()) {
+                userLogins.add(cursor.getString(0));
+            }
+        }
+
+        return userLogins;
+    }
+
+    @NonNull
+    public String getPasswordOwner(long passwordId) {
+        String resultLogin = "";
+
+        String sql = "select u.login from " + PASSWORD_TABLE
+                + " p inner join " + USER_TABLE +
+                " u on u.user_id = p.user_id where p.password_id = ?";
+
+        Cursor cursor = database.rawQuery(sql, new String[] {passwordId + ""});
+
+        if(cursor.getCount() > 0) {
+            cursor.moveToNext();
+            resultLogin = cursor.getString(0);
+        }
+
+        return resultLogin;
     }
 
 }
