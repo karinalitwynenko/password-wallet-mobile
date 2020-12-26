@@ -1,6 +1,8 @@
 package bsi.passwordWallet.activities;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -13,6 +15,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 
 import androidx.appcompat.app.AppCompatActivity;
 import bsi.passwordWallet.DataAccess;
@@ -23,11 +26,35 @@ import bsi.passwordWallet.User;
 import bsi.passwordWallet.services.PasswordService;
 
 public class PasswordDetailsActivity extends AppCompatActivity {
-    private WalletActivity.PasswordDeletedListener passwordDeletedListener;
     private Password password;
     private byte[] userPassword;
     private boolean editModeEnabled;
     private ArrayList<String> users;
+    private boolean detailsChanged;
+
+    TextWatcher textWatcher = new TextWatcher() {
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) { }
+
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+            detailsChanged = true;
+        }
+    };
+
+    View.OnClickListener disabledInputOnClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Toast.makeText(
+                    PasswordDetailsActivity.this,
+                    "You have to switch to the edit mode first.",
+                    Toast.LENGTH_LONG
+            ).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,14 +83,6 @@ public class PasswordDetailsActivity extends AppCompatActivity {
         final Button shareButton = findViewById(R.id.share_button);
         final Button deleteButton = findViewById(R.id.delete_button);
 
-        passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
-
-        loginEditText.setEnabled(editModeEnabled);
-        passwordEditText.setEnabled(editModeEnabled);
-        websiteEditText.setEnabled(editModeEnabled);
-        descriptionEditText.setEnabled(editModeEnabled);
-        deleteButton.setEnabled(editModeEnabled);
-
         Encryption encryption = new Encryption();
 
         loginEditText.setText(password.getLogin());
@@ -88,26 +107,6 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                     // display the password
                     passwordEditText.setTransformationMethod(null);
 
-            }
-        });
-
-        // dismiss the dialog when the user clicks on close button (cross)
-        findViewById(R.id.close_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
-        deleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!new DataAccess().deletePassword(password.getId())) {
-                    Toast.makeText(PasswordDetailsActivity.this, "Could not delete the password", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    finish();
-                }
             }
         });
 
@@ -140,8 +139,84 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             shareEditText.setVisibility(View.GONE);
             shareButton.setVisibility(View.GONE);
             findViewById(R.id.share_with_label).setVisibility(View.GONE);
+            deleteButton.setVisibility(View.GONE);
+
+            loginEditText.setOnClickListener(disabledInputOnClick);
+            passwordEditText.setOnClickListener(disabledInputOnClick);
+            websiteEditText.setOnClickListener(disabledInputOnClick);
+            descriptionEditText.setOnClickListener(disabledInputOnClick);
+
+            editModeEnabled = false;
         }
 
         ((ListView)findViewById(R.id.share_list)).setAdapter(usersAdapter);
+
+        findViewById(R.id.save_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!detailsChanged)
+                    return;
+
+                password.setLogin(loginEditText.getText().toString());
+                password.setPassword(passwordEditText.getText().toString());
+                password.setWebsite(websiteEditText.getText().toString());
+                password.setDescription(descriptionEditText.getText().toString());
+
+                boolean result = false;
+                try {
+                    result = new PasswordService().updatePassword(password, userPassword);
+                } catch (PasswordService.PasswordCreationException e) {
+                    Toast.makeText(
+                            PasswordDetailsActivity.this,
+                            e.getMessage(),
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+
+                if(result) {
+                    Toast.makeText(
+                            PasswordDetailsActivity.this,
+                            "Password has been modified.",
+                            Toast.LENGTH_LONG
+                    ).show();
+                }
+
+            }
+        });
+
+        passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
+
+        loginEditText.setEnabled(editModeEnabled);
+        passwordEditText.setEnabled(editModeEnabled);
+        websiteEditText.setEnabled(editModeEnabled);
+        descriptionEditText.setEnabled(editModeEnabled);
+        deleteButton.setEnabled(editModeEnabled);
+
+        if(editModeEnabled) {
+            loginEditText.addTextChangedListener(textWatcher);
+            passwordEditText.addTextChangedListener(textWatcher);
+            websiteEditText.addTextChangedListener(textWatcher);
+            descriptionEditText.addTextChangedListener(textWatcher);
+        }
+
+        findViewById(R.id.close_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!new DataAccess().deletePassword(password.getId())) {
+                    Toast.makeText(PasswordDetailsActivity.this, "Could not delete the password", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    finish();
+                }
+            }
+        });
     }
+
 }

@@ -56,7 +56,35 @@ public class PasswordService {
             throw new PasswordCreationException(COULD_NOT_CREATE);
     }
 
-    public boolean updatePasswords(ArrayList<Password> passwords, byte[] masterPassword, byte[] newMasterPassword) {
+    public boolean updatePassword(Password password, byte[] masterPassword) throws PasswordCreationException {
+        ArrayList<String> validationResults = new ArrayList<>();
+
+        validationResults.add(validation.validatePassword(password.getPassword()));
+        validationResults.add(validation.validateLogin(password.getLogin()));
+        validationResults.add(validation.validateWebsite(password.getLogin()));
+
+        int validationMessageIndex = -1;
+        for(int i = 0; i < validationResults.size(); i++)
+            if(validationResults.get(i) != null && !validationResults.get(i).isEmpty())
+                validationMessageIndex = i;
+
+        // check if any validation error occurred
+        if(validationMessageIndex != -1)
+            throw new PasswordCreationException(validationResults.get(validationMessageIndex));
+
+        byte[] randomIV = encryption.randomIV();
+
+        password.setPassword(encryption.encryptAES128(password.getPassword(), masterPassword, randomIV));
+        password.setIV(Base64.getEncoder().encodeToString(randomIV));
+
+        if(!dataAccess.updatePassword(password)) {
+            throw new PasswordCreationException("Could not update password details.");
+        }
+        else
+            return true;
+    }
+
+    public boolean updatePasswordHashes(ArrayList<Password> passwords, byte[] masterPassword, byte[] newMasterPassword) {
         String decryptedPassword;
         byte[] randomIV;
 
@@ -72,7 +100,7 @@ public class PasswordService {
             p.setIV(Base64.getEncoder().encodeToString(randomIV));
         }
 
-        return dataAccess.updatePasswords(passwords);
+        return dataAccess.updatePasswordHashes(passwords);
     }
 
     public String sharePassword(Password password, String partOwnerLogin) {

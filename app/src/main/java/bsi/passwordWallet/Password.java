@@ -55,6 +55,22 @@ public class Password implements Serializable {
         return this.iv;
     }
 
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public Password() {}
 
     public Password(long passwordId, long userId, String login, String password, String iv, String website, String description) {

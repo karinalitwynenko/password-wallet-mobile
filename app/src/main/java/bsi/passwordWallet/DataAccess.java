@@ -158,6 +158,25 @@ public class DataAccess {
             return null;
     }
 
+    public boolean updatePassword(Password password) {
+        contentValues.clear();
+        contentValues.put(Password.USER_ID, password.getUserId());
+        contentValues.put(Password.LOGIN, password.getLogin());
+        contentValues.put(Password.PASSWORD, password.getPassword());
+        contentValues.put(Password.IV, password.getIV());
+        contentValues.put(Password.WEBSITE, password.getWebsite());
+        contentValues.put(Password.DESCRIPTION, password.getDescription());
+
+        long passwordID = database.update(
+                PASSWORD_TABLE,
+                contentValues,
+                "password_id=?",
+                new String[] {password.getId() + ""}
+                );
+
+        return passwordID != -1;
+    };
+
     /**
      * @param passwordID id of password that should be deleted
      * @return true if password deleted successfully
@@ -174,7 +193,7 @@ public class DataAccess {
      * @param passwords ArrayList of Password objects
      * @return true if passwords updated successfully
      */
-    public boolean updatePasswords(ArrayList<Password> passwords) {
+    public boolean updatePasswordHashes(ArrayList<Password> passwords) {
         for(Password p : passwords) {
             contentValues.clear();
             contentValues.put(Password.PASSWORD, p.getPassword());

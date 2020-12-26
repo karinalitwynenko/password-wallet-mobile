@@ -3,6 +3,7 @@ package bsi.passwordWallet.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +36,7 @@ public class WalletActivity extends AppCompatActivity {
     private boolean editModeEnabled;
 
     static class PasswordAdapter extends ArrayAdapter<Password> {
-        private final ArrayList<Password> dataSet;
+        private ArrayList<Password> dataSet;
 
         public PasswordAdapter(ArrayList<Password> data, Context context) {
             super(context, R.layout.wallet_item, data);
@@ -67,10 +68,6 @@ public class WalletActivity extends AppCompatActivity {
         void passwordCreated(Password password);
     }
 
-    public interface PasswordDeletedListener {
-        void passwordModified(Password password);
-    }
-
     public interface UserPasswordModifiedListener {
         void userPasswordModified(String newUserPassword);
     }
@@ -84,20 +81,12 @@ public class WalletActivity extends AppCompatActivity {
         }
     };
 
-    PasswordDeletedListener passwordDeletedListener = new PasswordDeletedListener() {
-        @Override
-        public void passwordModified(Password password) {
-            passwords.remove(password);
-            passwordAdapter.notifyDataSetChanged();
-        }
-    };
-
     UserPasswordModifiedListener userPasswordModifiedListener = new UserPasswordModifiedListener() {
         @Override
         public void userPasswordModified(String newUserPassword) {
             byte[] newUserPasswordHash = new Encryption().calculateMD5(newUserPassword);
             PasswordService passwordService = new PasswordService();
-            if(passwordService.updatePasswords(passwords, userPasswordHash, newUserPasswordHash)) {
+            if(passwordService.updatePasswordHashes(passwords, userPasswordHash, newUserPasswordHash)) {
                 // if the passwords updated successfully, update password fields
                 userPassword = newUserPassword;
                 userPasswordHash = newUserPasswordHash;
@@ -149,7 +138,7 @@ public class WalletActivity extends AppCompatActivity {
         passwordsListView = findViewById(R.id.password_list);
         Button editModeToggle = findViewById(R.id.edit_mode_toggle);
 
-        passwords = new PasswordService().getPasswords(user.getId());
+        passwords = new ArrayList<>();
         passwordAdapter = new PasswordAdapter(passwords, this);
         passwordsListView.setAdapter(passwordAdapter);
 
@@ -210,10 +199,10 @@ public class WalletActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        passwords = new PasswordService().getPasswords(user.getId());
+    protected void onResume() {
+        super.onResume();
+        passwordAdapter.dataSet.clear();
+        passwordAdapter.dataSet.addAll(new PasswordService().getPasswords(user.getId()));
         passwordAdapter.notifyDataSetChanged();
     }
-
 }

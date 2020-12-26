@@ -266,14 +266,14 @@ public class DataAccessTest {
     }
 
     @Test
-    public void updatePasswords_ReturnsTrue_IfPasswordsUpdated() {
+    public void updatePasswordHashes_ReturnsTrue_IfPasswordsUpdated() {
         when(databaseMock.update(anyString(), any(), anyString(), any())).thenReturn(1);
 
         ArrayList<Password> passwords = new ArrayList<>();
         passwords.add(new Password(1, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
         passwords.add(new Password(2, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
 
-        boolean result = dataAccess.updatePasswords(passwords);
+        boolean result = dataAccess.updatePasswordHashes(passwords);
 
         verify(databaseMock, times(1))
                 .update(DataAccess.PASSWORD_TABLE, contentValuesMock, "password_id = ?", new String[] {"1"});
@@ -287,7 +287,7 @@ public class DataAccessTest {
     }
 
     @Test
-    public void updatePasswords_ReturnsFalse_IfPasswordsNotUpdated() {
+    public void updatePasswordHashes_ReturnsFalse_IfPasswordsNotUpdated() {
         when(databaseMock.update(anyString(), any(), anyString(), any())).thenReturn(1).thenReturn(0);
 
         ArrayList<Password> passwords = new ArrayList<>();
@@ -295,7 +295,7 @@ public class DataAccessTest {
         passwords.add(new Password(2, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
         passwords.add(new Password(3, 1, "testLog", "pass", "testIV", "exampleWebsite", ""));
 
-        boolean result = dataAccess.updatePasswords(passwords);
+        boolean result = dataAccess.updatePasswordHashes(passwords);
         verify(databaseMock, times(1))
                 .update(DataAccess.PASSWORD_TABLE, contentValuesMock, "password_id = ?", new String[] {"1"});
         verify(databaseMock, times(1))

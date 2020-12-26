@@ -266,7 +266,7 @@ public class PasswordServiceTest {
     }
 
     @Test
-    public void updatePasswords_ReturnsTrue_IfPasswordsUpdated() {
+    public void updatePasswordHashes_ReturnsTrue_IfPasswordsUpdated() {
         ArrayList<Password> passwords = new ArrayList<>();
         passwords.add(
                 new Password(
@@ -293,7 +293,7 @@ public class PasswordServiceTest {
         );
 
         when(encryptionMock.randomIV()).thenReturn("testIV".getBytes());
-        when(dataAccessMock.updatePasswords(any(ArrayList.class))).thenReturn(true);
+        when(dataAccessMock.updatePasswordHashes(any(ArrayList.class))).thenReturn(true);
         when(
                 encryptionMock.decryptAES128(anyString(), any(byte[].class), any(byte[].class))
         ).thenReturn("decryptedPassword1").thenReturn("decryptedPassword2");
@@ -303,7 +303,7 @@ public class PasswordServiceTest {
         ).thenReturn("newEncryptedPassword1").thenReturn("newEncryptedPassword2");
 
 
-        boolean result = passwordService.updatePasswords(
+        boolean result = passwordService.updatePasswordHashes(
                 passwords, "testMasterPassword".getBytes(), "testMasterPassword2".getBytes()
         );
 
@@ -329,7 +329,7 @@ public class PasswordServiceTest {
                 times(1)
         ).encryptAES128("decryptedPassword2", "testMasterPassword2".getBytes(), "testIV".getBytes());
 
-        verify(dataAccessMock, times(1)).updatePasswords(passwords);
+        verify(dataAccessMock, times(1)).updatePasswordHashes(passwords);
 
         assertEquals("newEncryptedPassword1", passwords.get(0).getPassword());
         assertEquals("newEncryptedPassword2", passwords.get(1).getPassword());
