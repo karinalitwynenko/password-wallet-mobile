@@ -14,16 +14,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Objects;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
 import bsi.passwordWallet.R;
 import bsi.passwordWallet.User;
 import bsi.passwordWallet.services.PasswordService;
+import bsi.passwordWallet.services.UserService;
 
 public class WalletActivity extends AppCompatActivity {
     private ListView passwordsListView;
@@ -78,6 +81,11 @@ public class WalletActivity extends AppCompatActivity {
         public void passwordCreated(Password password) {
             passwords.add(password);
             passwordAdapter.notifyDataSetChanged();
+
+            // register delete activity
+            new UserService().registerUserActivity(
+                    new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.CREATE)
+            );
         }
     };
 
@@ -142,21 +150,17 @@ public class WalletActivity extends AppCompatActivity {
         passwordAdapter = new PasswordAdapter(passwords, this);
         passwordsListView.setAdapter(passwordAdapter);
 
-        editModeToggle.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View view) {
-                TextView tv = (TextView)view;
-                if(editModeEnabled) {
-                    tv.setText(R.string.ready_only);
-                    tv.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_baseline_lock_24, 0, 0, 0);
-                    editModeEnabled = false;
-                }
-                else {
-                    tv.setText(R.string.edit_mode_enabled);
-                    tv.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_baseline_lock_open_24, 0, 0, 0);
-                    editModeEnabled = true;
-                }
+        editModeToggle.setOnClickListener(view -> {
+            TextView tv = (TextView)view;
+            if(editModeEnabled) {
+                tv.setText(R.string.ready_only);
+                tv.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_baseline_lock_24, 0, 0, 0);
+                editModeEnabled = false;
+            }
+            else {
+                tv.setText(R.string.edit_mode_enabled);
+                tv.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_baseline_lock_open_24, 0, 0, 0);
+                editModeEnabled = true;
             }
         });
 
@@ -185,16 +189,19 @@ public class WalletActivity extends AppCompatActivity {
             startActivityForResult(intent, 0);
         });
 
-        findViewById(R.id.change_master_password).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                UserAccountDialog dialog =
-                    (UserAccountDialog)getSupportFragmentManager().findFragmentByTag("UserAccount");
-                if(dialog == null) {
-                    dialog = new UserAccountDialog(user, userPassword, userPasswordModifiedListener);
-                    dialog.show(getSupportFragmentManager(), "UserAccount");
-                }
+        findViewById(R.id.change_master_password).setOnClickListener(v -> {
+            UserAccountDialog dialog =
+                (UserAccountDialog)getSupportFragmentManager().findFragmentByTag("UserAccount");
+            if(dialog == null) {
+                dialog = new UserAccountDialog(user, userPassword, userPasswordModifiedListener);
+                dialog.show(getSupportFragmentManager(), "UserAccount");
             }
+        });
+
+        findViewById(R.id.show_activity_log).setOnClickListener(v -> {
+            Intent intent = new Intent(getApplicationContext(), ActionLogActivity.class);
+            intent.putExtra("user", user);
+            startActivity(intent);
         });
     }
 

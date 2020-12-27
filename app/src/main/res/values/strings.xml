@@ -18,5 +18,9 @@
     <string name="shared_with">This password is shared with:</string>
     <string name="belongs_to">This password belongs to:</string>
 
+    <string name="login">Login</string>
+    <string name="password">Password</string>
+    <string name="website">Website</string>
+    <string name="description">Description</string>
 
 </resources>

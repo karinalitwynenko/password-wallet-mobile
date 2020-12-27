@@ -15,22 +15,27 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 
 import androidx.appcompat.app.AppCompatActivity;
+import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
 import bsi.passwordWallet.R;
 import bsi.passwordWallet.User;
 import bsi.passwordWallet.services.PasswordService;
+import bsi.passwordWallet.services.UserService;
 
 public class PasswordDetailsActivity extends AppCompatActivity {
     private Password password;
     private byte[] userPassword;
     private boolean editModeEnabled;
-    private ArrayList<String> users;
     private boolean detailsChanged;
+    private UserService userService = new UserService();
+    private User user;
+
 
     TextWatcher textWatcher = new TextWatcher() {
         @Override
@@ -60,9 +65,8 @@ public class PasswordDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        User user = null;
         Bundle intentBundle = getIntent().getExtras();
-        try{
+        try {
             password = (Password)intentBundle.get("password");
             userPassword = intentBundle.getByteArray("userMasterPassword");
             editModeEnabled = intentBundle.getBoolean("editModeEnabled");
@@ -71,6 +75,11 @@ public class PasswordDetailsActivity extends AppCompatActivity {
           e.printStackTrace();
           finish();
         }
+
+
+        // register 'view' activity
+        userService.registerUserActivity(
+                new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.VIEW));
 
         setContentView(R.layout.activity_password_details);
 
@@ -96,38 +105,37 @@ public class PasswordDetailsActivity extends AppCompatActivity {
         websiteEditText.setText(password.getWebsite());
         descriptionEditText.setText(password.getDescription());
 
-        findViewById(R.id.reveal_old_password_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // check if the password is visible
-                if(passwordEditText.getTransformationMethod() == null)
-                    // hide the password
-                    passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
-                else
-                    // display the password
-                    passwordEditText.setTransformationMethod(null);
+        findViewById(R.id.reveal_old_password_button).setOnClickListener(v -> {
+            // check if the password is visible
+            if(passwordEditText.getTransformationMethod() == null)
+                // hide the password
+                passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
+            else
+                // display the password
+                passwordEditText.setTransformationMethod(null);
 
-            }
         });
 
-        users = new ArrayList<>();
+        ArrayList<String> users = new ArrayList<>();
         ArrayAdapter<String> usersAdapter = new ArrayAdapter<>(this, R.layout.part_owner_item, R.id.user_login, users);
 
         // check if the password belongs to the current user
         if(password.getUserId() == user.getId()) {
             usersAdapter.addAll(DataAccess.getInstance().getPartOwners(password.getId()));
 
-            shareButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if(!shareEditText.getText().toString().isEmpty()) {
-                        PasswordService passwordService = new PasswordService();
-                        String result = passwordService.sharePassword(password, shareEditText.getText().toString());
-                        Toast.makeText(PasswordDetailsActivity.this, result, Toast.LENGTH_SHORT).show();
+            shareButton.setOnClickListener(view -> {
+                if(!shareEditText.getText().toString().isEmpty()) {
+                    PasswordService passwordService = new PasswordService();
+                    String result = passwordService.sharePassword(password, shareEditText.getText().toString());
+                    Toast.makeText(PasswordDetailsActivity.this, result, Toast.LENGTH_SHORT).show();
 
+                    if(result.equals("Password has been shared")) {
                         usersAdapter.clear();
                         usersAdapter.addAll(DataAccess.getInstance().getPartOwners(password.getId()));
                         usersAdapter.notifyDataSetChanged();
+                        // register 'share' activity
+                        userService.registerUserActivity(
+                                new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.SHARE));
                     }
                 }
             });
@@ -151,37 +159,36 @@ public class PasswordDetailsActivity extends AppCompatActivity {
 
         ((ListView)findViewById(R.id.share_list)).setAdapter(usersAdapter);
 
-        findViewById(R.id.save_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!detailsChanged)
-                    return;
+        findViewById(R.id.save_button).setOnClickListener(v -> {
+            if(!detailsChanged)
+                return;
 
-                password.setLogin(loginEditText.getText().toString());
-                password.setPassword(passwordEditText.getText().toString());
-                password.setWebsite(websiteEditText.getText().toString());
-                password.setDescription(descriptionEditText.getText().toString());
+            password.setLogin(loginEditText.getText().toString());
+            password.setPassword(passwordEditText.getText().toString());
+            password.setWebsite(websiteEditText.getText().toString());
+            password.setDescription(descriptionEditText.getText().toString());
 
-                boolean result = false;
-                try {
-                    result = new PasswordService().updatePassword(password, userPassword);
-                } catch (PasswordService.PasswordCreationException e) {
-                    Toast.makeText(
-                            PasswordDetailsActivity.this,
-                            e.getMessage(),
-                            Toast.LENGTH_LONG
-                    ).show();
-                }
-
-                if(result) {
-                    Toast.makeText(
-                            PasswordDetailsActivity.this,
-                            "Password has been modified.",
-                            Toast.LENGTH_LONG
-                    ).show();
-                }
-
+            boolean result = false;
+            try {
+                result = new PasswordService().updatePassword(password, userPassword);
+            } catch (PasswordService.PasswordCreationException e) {
+                Toast.makeText(
+                        PasswordDetailsActivity.this,
+                        e.getMessage(),
+                        Toast.LENGTH_LONG
+                ).show();
             }
+
+            if(result) {
+                Toast.makeText(
+                        PasswordDetailsActivity.this,
+                        "Password has been modified.",
+                        Toast.LENGTH_LONG
+                ).show();
+
+                // TODO: register changes
+            }
+
         });
 
         passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
@@ -206,15 +213,17 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             }
         });
 
-        deleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(!new DataAccess().deletePassword(password.getId())) {
-                    Toast.makeText(PasswordDetailsActivity.this, "Could not delete the password", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    finish();
-                }
+        deleteButton.setOnClickListener(v -> {
+            if(!new DataAccess().deletePassword(password.getId())) {
+                Toast.makeText(PasswordDetailsActivity.this, "Could not delete the password", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                // register 'delete' activity
+                userService.registerUserActivity(
+                        new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.DELETE));
+
+                Toast.makeText(PasswordDetailsActivity.this, "The password has been deleted.", Toast.LENGTH_SHORT).show();
+                finish();
             }
         });
     }

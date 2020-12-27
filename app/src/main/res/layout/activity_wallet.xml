@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,11 +11,10 @@
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:background="@drawable/ic_baseline_add_circle_24"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/footer"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/linearLayout"
         app:layout_constraintTop_toBottomOf="@+id/password_list" />
 
     <TextView
@@ -28,7 +28,7 @@
         android:paddingEnd="6dp"
         android:paddingBottom="18dp"
         android:textColor="@color/dark_text"
-        android:text="Website"
+        android:text="@string/website"
         app:layout_constraintBottom_toTopOf="@id/password_list"
         app:layout_constraintEnd_toStartOf="@+id/description_header"
         app:layout_constraintStart_toStartOf="parent"
@@ -46,7 +46,7 @@
         android:paddingEnd="6dp"
         android:paddingBottom="18dp"
         android:textColor="@color/dark_text"
-        android:text="Description"
+        android:text="@string/description"
         app:layout_constraintBottom_toTopOf="@id/password_list"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/website_header"
@@ -85,7 +85,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="6dp"
                 android:gravity="center"
-                android:text="Password Wallet"
+                android:text="@string/app_name"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -100,17 +100,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
                 android:layout_marginEnd="16dp"
-                android:drawableEnd="@drawable/ic_baseline_account_circle_24"
                 android:ellipsize="end"
                 android:gravity="center"
                 android:maxWidth="160dp"
                 android:maxLines="1"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
+                android:drawablePadding="4dp"
                 android:textColor="@android:color/white"
                 app:layout_constraintBottom_toTopOf="@+id/change_master_password"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/divider" />
+                app:layout_constraintTop_toBottomOf="@+id/divider"
+                app:drawableEndCompat="@drawable/ic_baseline_account_circle_24" />
 
             <TextView
                 android:id="@+id/change_master_password"
@@ -135,6 +136,7 @@
         android:id="@+id/password_list"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginBottom="4dp"
         android:paddingBottom="20dp"
         app:layout_constraintBottom_toTopOf="@+id/add_new_password"
         app:layout_constraintEnd_toEndOf="parent"
@@ -148,15 +150,45 @@
         android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginBottom="16dp"
-        android:drawableLeft="@drawable/ic_baseline_lock_24"
-        android:text="@string/ready_only"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/button_bg"
+        android:drawableStart="@drawable/ic_baseline_lock_24"
+        android:drawableTint="@android:color/white"
         android:paddingStart="6dp"
         android:paddingEnd="6dp"
+        android:text="@string/ready_only"
         android:textColor="@android:color/white"
-        android:drawableTint="@android:color/white"
-        android:background="@drawable/button_bg"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/footer"
         app:layout_constraintStart_toStartOf="parent" />
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/footer"
+        android:layout_width="match_parent"
+        android:layout_height="84dp"
+        android:background="@color/colorAccent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/show_activity_log"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_marginEnd="16dp"
+            android:drawablePadding="6dp"
+            android:gravity="center"
+            android:text="Activity log"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:drawableEndCompat="@drawable/ic_baseline_history_24"
+            app:drawableTint="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -30,6 +30,12 @@
 
         <activity
             android:name=".activities.PasswordDetailsActivity"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustPan" >
+        </activity>
+
+        <activity
+            android:name=".activities.ActionLogActivity"
             android:launchMode="singleTask" >
         </activity>
     </application>

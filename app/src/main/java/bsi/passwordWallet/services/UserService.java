@@ -3,6 +3,7 @@ package bsi.passwordWallet.services;
 import java.util.ArrayList;
 import java.util.Date;
 
+import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.User;
@@ -167,6 +168,10 @@ public class UserService {
             throw new UserAccountException(COULD_NOT_CREATE);
         else
             return user;
+    }
+
+    public void registerUserActivity(ActivityLog log) {
+        dataAccess.addActivityLog(log);
     }
 
 }

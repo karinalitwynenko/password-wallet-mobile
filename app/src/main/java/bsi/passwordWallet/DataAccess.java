@@ -18,6 +18,8 @@ public class DataAccess {
     static final String LOGIN_LOG_TABLE = "login_log";
     static final String BLOCKED_IPS_TABLE = "blocked_ips";
     static final String SHARED_PASSWORDS_TABLE = "shared_passwords";
+    static final String ACTIVITY_LOGS_TABLE = "activity_logs";
+    static final String PASSWORD_CHANGES_TABLE = "password_changes";
 
     private ContentValues contentValues = new ContentValues();
 
@@ -40,13 +42,10 @@ public class DataAccess {
      */
     public User getUser(String login) {
         Cursor cursor = database.rawQuery("select * from " + USER_TABLE + " where login = ?", new String[] {login});
-        // check if user with specified login exists
-        if(cursor.getCount() == 0)
-            return null;
-        else {
-            cursor.moveToFirst();
-            // return an instance of User
-            return new User(
+        User user = null;
+
+        if(cursor.moveToFirst()) {
+            user = new User(
                     cursor.getLong(cursor.getColumnIndex(User.USER_ID)),
                     cursor.getString(cursor.getColumnIndex(User.LOGIN)),
                     cursor.getString(cursor.getColumnIndex(User.ENCRYPTION_TYPE)),
@@ -54,6 +53,9 @@ public class DataAccess {
                     cursor.getString(cursor.getColumnIndex(User.SALT))
             );
         }
+
+        cursor.close();
+        return user;
     }
 
     /**
@@ -128,6 +130,7 @@ public class DataAccess {
                     )
             );
         }
+        cursor.close();
 
         return passwords;
     }
@@ -267,6 +270,7 @@ public class DataAccess {
                     )
             );
         }
+        cursor.close();
 
         return logs;
     }
@@ -295,6 +299,7 @@ public class DataAccess {
         while(cursor.moveToNext()) {
             ips.add(cursor.getString(0));
         }
+        cursor.close();
 
         return ips;
     }
@@ -360,13 +365,14 @@ public class DataAccess {
                 );
             }
         }
+        cursor.close();
 
         return passwords;
     }
 
     @NonNull
     public ArrayList<String> getPartOwners(long passwordId) {
-        ArrayList<String> userLogins = new ArrayList<>();;
+        ArrayList<String> userLogins = new ArrayList<>();
 
         String sql = "select u.login from " + SHARED_PASSWORDS_TABLE + " sp inner join " + PASSWORD_TABLE
                 + " p on sp.password_id = p.password_id inner join " + USER_TABLE +
@@ -379,6 +385,7 @@ public class DataAccess {
                 userLogins.add(cursor.getString(0));
             }
         }
+        cursor.close();
 
         return userLogins;
     }
@@ -397,8 +404,46 @@ public class DataAccess {
             cursor.moveToNext();
             resultLogin = cursor.getString(0);
         }
+        cursor.close();
 
         return resultLogin;
+    }
+
+    @NonNull
+    public ArrayList<ActivityLog> getActivityLogs(long userId) {
+        ArrayList<ActivityLog> logs = new ArrayList<>();
+
+        Cursor cursor = database.rawQuery(
+                "select * from " + ACTIVITY_LOGS_TABLE + " where user_id = ?",
+                new String[] {userId + ""}
+                );
+
+        while(cursor.moveToNext()) {
+            logs.add(
+                    new ActivityLog(
+                            cursor.getLong(cursor.getColumnIndex(ActivityLog.ACTIVITY_ID)),
+                            cursor.getLong(cursor.getColumnIndex(ActivityLog.USER_ID)),
+                            cursor.getLong(cursor.getColumnIndex(ActivityLog.PASSWORD_ID)),
+                            cursor.getLong(cursor.getColumnIndex(ActivityLog.TIME)),
+                            cursor.getString(cursor.getColumnIndex(ActivityLog.FUNCTION))
+                            )
+            );
+        }
+        cursor.close();
+
+        return logs;
+    }
+
+    public boolean addActivityLog(ActivityLog activityLog) {
+        contentValues.clear();
+        contentValues.put(ActivityLog.USER_ID, activityLog.getUserId());
+        contentValues.put(ActivityLog.PASSWORD_ID, activityLog.getPasswordId());
+        contentValues.put(ActivityLog.TIME, activityLog.getTime());
+        contentValues.put(ActivityLog.FUNCTION, activityLog.getFunction());
+
+        long logId = database.insert(ACTIVITY_LOGS_TABLE, null, contentValues);
+
+        return logId != -1;
     }
 
 }

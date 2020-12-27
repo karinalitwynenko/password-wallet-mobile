@@ -53,13 +53,13 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
 
         db.execSQL(
                 "create table if not exists passwords (" +
-                        "password_id integer primary key autoincrement, " +
-                        "user_id integer not null, " +
-                        "login text not null, " +
-                        "password text not null, " +
-                        "iv text not null, " +
-                        "description text, " +
-                        "website text not null, " +
+                        "password_id integer primary key autoincrement," +
+                        "user_id integer not null," +
+                        "login text not null," +
+                        "password text not null," +
+                        "iv text not null," +
+                        "description text," +
+                        "website text not null," +
                         "foreign key (user_id) references users (user_id)" +
                         ");"
         );
@@ -71,6 +71,31 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                         "part_owner_id not null, " +
                         "foreign key (password_id) references passwords (password_id)," +
                         "foreign key (part_owner_id) references users (user_id)" +
+                        ");"
+        );
+
+        db.execSQL(
+                "create table if not exists activity_logs (" +
+                        "activity_id integer primary key autoincrement," +
+                        "user_id integer not null," +
+                        "password_id integer not null," +
+                        "time integer not null," +
+                        "function text not null," +
+                        "foreign key (password_id) references passwords (password_id)," +
+                        "foreign key (user_id) references users (user_id)" +
+                        ");"
+        );
+
+        db.execSQL(
+                "create table if not exists password_changes (" +
+                        "password_change_id integer primary key autoincrement," +
+                        "password_id integer not null," +
+                        "time integer not null," +
+                        "record_name text not null," +
+                        "action_type text not null," +
+                        "previous_value text not null," +
+                        "new_value text not null," +
+                        "foreign key (password_id) references passwords (password_id)" +
                         ");"
         );
     }

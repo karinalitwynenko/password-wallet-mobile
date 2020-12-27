@@ -10,6 +10,7 @@ public class Password implements Serializable {
     public static final String DESCRIPTION = "description";
     public static final String PASSWORD = "password";
     public static final String IV = "iv";
+    public static final String DELETED = "deleted";
 
     private long id;
     private long userId;
@@ -73,7 +74,12 @@ public class Password implements Serializable {
 
     public Password() {}
 
-    public Password(long passwordId, long userId, String login, String password, String iv, String website, String description) {
+    public Password(
+            long passwordId,
+            long userId,
+            String login,
+            String password,
+            String iv, String website, String description) {
         this.id = passwordId;
         this.userId = userId;
         this.login = login;
