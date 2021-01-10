@@ -23,4 +23,9 @@
     <string name="website">Website</string>
     <string name="description">Description</string>
 
+    <string name="share">Share</string>
+    <string name="save">Save</string>
+    <string name="share_with">Share with</string>
+
+
 </resources>

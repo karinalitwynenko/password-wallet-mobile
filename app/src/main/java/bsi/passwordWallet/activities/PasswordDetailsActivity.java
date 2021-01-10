@@ -1,5 +1,6 @@
 package bsi.passwordWallet.activities;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -17,6 +18,7 @@ import java.util.Base64;
 import java.util.Date;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
@@ -50,14 +52,17 @@ public class PasswordDetailsActivity extends AppCompatActivity {
         }
     };
 
-    View.OnClickListener disabledInputOnClick = new View.OnClickListener() {
+    View.OnClickListener disabledInputOnClick = view -> Toast.makeText(
+            PasswordDetailsActivity.this,
+            "You have to switch to the edit mode first.",
+            Toast.LENGTH_LONG
+    ).show();
+
+
+    View.OnFocusChangeListener onFocusChangeListener = new View.OnFocusChangeListener() {
         @Override
-        public void onClick(View view) {
-            Toast.makeText(
-                    PasswordDetailsActivity.this,
-                    "You have to switch to the edit mode first.",
-                    Toast.LENGTH_LONG
-            ).show();
+        public void onFocusChange(View v, boolean hasFocus) {
+            Toast.makeText(PasswordDetailsActivity.this, "You have to switch to the edit mode first.", Toast.LENGTH_LONG).show();
         }
     };
 
@@ -138,6 +143,34 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                     }
                 }
             });
+
+            if(!editModeEnabled) {
+                loginEditText.setBackground(ContextCompat.getDrawable(this, R.drawable.disabled_edit_text));
+                passwordEditText.setBackground(ContextCompat.getDrawable(this, R.drawable.disabled_edit_text));
+                websiteEditText.setBackground(ContextCompat.getDrawable(this, R.drawable.disabled_edit_text));
+                descriptionEditText.setBackground(ContextCompat.getDrawable(this, R.drawable.disabled_edit_text));
+
+                loginEditText.setTextColor(Color.WHITE);
+                passwordEditText.setTextColor(Color.WHITE);
+                websiteEditText.setTextColor(Color.WHITE);
+                descriptionEditText.setTextColor(Color.WHITE);
+
+                loginEditText.setKeyListener(null);
+                passwordEditText.setKeyListener(null);
+                websiteEditText.setKeyListener(null);
+                descriptionEditText.setKeyListener(null);
+
+                loginEditText.setOnFocusChangeListener(onFocusChangeListener);
+                passwordEditText.setOnFocusChangeListener(onFocusChangeListener);
+                websiteEditText.setOnFocusChangeListener(onFocusChangeListener);
+                descriptionEditText.setOnFocusChangeListener(onFocusChangeListener);
+            }
+            else {
+                loginEditText.addTextChangedListener(textWatcher);
+                passwordEditText.addTextChangedListener(textWatcher);
+                websiteEditText.addTextChangedListener(textWatcher);
+                descriptionEditText.addTextChangedListener(textWatcher);
+            }
         }
         else {
             ((TextView)findViewById(R.id.share_list_header)).setText(getText(R.string.belongs_to));
@@ -148,11 +181,6 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             findViewById(R.id.share_with_label).setVisibility(View.GONE);
             deleteButton.setVisibility(View.GONE);
             saveButton.setVisibility(View.GONE);
-
-            loginEditText.setOnClickListener(disabledInputOnClick);
-            passwordEditText.setOnClickListener(disabledInputOnClick);
-            websiteEditText.setOnClickListener(disabledInputOnClick);
-            descriptionEditText.setOnClickListener(disabledInputOnClick);
 
             editModeEnabled = false;
         }
@@ -193,24 +221,20 @@ public class PasswordDetailsActivity extends AppCompatActivity {
 
         passwordEditText.setTransformationMethod(new PasswordTransformationMethod());
 
-        loginEditText.setEnabled(editModeEnabled);
-        passwordEditText.setEnabled(editModeEnabled);
-        websiteEditText.setEnabled(editModeEnabled);
-        descriptionEditText.setEnabled(editModeEnabled);
-        deleteButton.setEnabled(editModeEnabled);
-
-        if(editModeEnabled) {
-            loginEditText.addTextChangedListener(textWatcher);
-            passwordEditText.addTextChangedListener(textWatcher);
-            websiteEditText.addTextChangedListener(textWatcher);
-            descriptionEditText.addTextChangedListener(textWatcher);
-        }
-
         findViewById(R.id.close_button).setOnClickListener(v -> finish());
 
         deleteButton.setOnClickListener(v -> {
+            if(!editModeEnabled) {
+                Toast.makeText(PasswordDetailsActivity.this, "You have to switch to the edit mode first.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             if(!passwordService.deletePassword(password.getId())) {
-                Toast.makeText(PasswordDetailsActivity.this, "Could not delete the password", Toast.LENGTH_SHORT).show();
+                Toast.makeText(
+                        PasswordDetailsActivity.this,
+                        "Could not delete the password",
+                        Toast.LENGTH_SHORT
+                ).show();
             }
             else {
                 // register 'delete' activity
