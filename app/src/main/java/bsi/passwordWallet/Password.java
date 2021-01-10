@@ -19,6 +19,7 @@ public class Password implements Serializable {
     private String iv;
     private String website;
     private String description;
+    private int deleted;
 
     public void setPassword(String password) {
         this.password = password;
@@ -73,6 +74,14 @@ public class Password implements Serializable {
     }
 
     public Password() {}
+
+    public int getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(int deleted) {
+        this.deleted = deleted;
+    }
 
     public Password(
             long passwordId,

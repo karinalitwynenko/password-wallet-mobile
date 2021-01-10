@@ -87,7 +87,7 @@ public class UserService {
             throw new UserAccountException(IP_ADDRESS_CANT_BE_EMPTY);
 
         // try to get user with provided login
-        User user = dataAccess.getUser(login);
+        User user = dataAccess.getUserByLogin(login);
         // check if the user was found
         if(user == null)
             throw new UserAccountException(USER_DOES_NOT_EXIST);
@@ -145,7 +145,7 @@ public class UserService {
         if(!password.equals(confirmPassword))
             throw new UserAccountException(PASSWORDS_DO_NOT_MATCH);
 
-        User user = dataAccess.getUser(login);
+        User user = dataAccess.getUserByLogin(login);
         // check if provided login is already in use
         if(user != null)
             throw new UserAccountException(LOGIN_EXISTS);

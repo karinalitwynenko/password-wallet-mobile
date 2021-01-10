@@ -3,7 +3,6 @@ package bsi.passwordWallet.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import bsi.passwordWallet.ActivityLog;
@@ -33,8 +31,8 @@ public class WalletActivity extends AppCompatActivity {
     private ArrayList<Password> passwords;
     private PasswordAdapter passwordAdapter;
     private User user;
-    private String userPassword;
-    private byte[] userPasswordHash;  // MD5 hash
+    private String masterPassword;
+    private byte[] masterPasswordHash;  // MD5 hash
 
     private boolean editModeEnabled;
 
@@ -94,10 +92,10 @@ public class WalletActivity extends AppCompatActivity {
         public void userPasswordModified(String newUserPassword) {
             byte[] newUserPasswordHash = new Encryption().calculateMD5(newUserPassword);
             PasswordService passwordService = new PasswordService();
-            if(passwordService.updatePasswordHashes(passwords, userPasswordHash, newUserPasswordHash)) {
+            if(passwordService.updatePasswordHashes(passwords, masterPasswordHash, newUserPasswordHash)) {
                 // if the passwords updated successfully, update password fields
-                userPassword = newUserPassword;
-                userPasswordHash = newUserPasswordHash;
+                masterPassword = newUserPassword;
+                masterPasswordHash = newUserPasswordHash;
 
                 Toast.makeText(
                         getApplicationContext(),
@@ -138,8 +136,8 @@ public class WalletActivity extends AppCompatActivity {
 
         if(getIntent().getExtras() != null) {
             user = (User)getIntent().getExtras().get("user");
-            userPassword = getIntent().getExtras().getString("user_password");
-            userPasswordHash = new Encryption().calculateMD5(userPassword);
+            masterPassword = getIntent().getExtras().getString("user_password");
+            masterPasswordHash = new Encryption().calculateMD5(masterPassword);
             userButton.setText(user.getLogin());
         }
 
@@ -167,7 +165,7 @@ public class WalletActivity extends AppCompatActivity {
         passwordsListView.setOnItemClickListener((parent, view, position, id) -> {
             Intent intent = new Intent(getApplicationContext(), PasswordDetailsActivity.class);
             intent.putExtra("password", passwords.get(position));
-            intent.putExtra("userMasterPassword", userPasswordHash);
+            intent.putExtra("userMasterPassword", masterPasswordHash);
             intent.putExtra("editModeEnabled", editModeEnabled);
             intent.putExtra("user", user);
 
@@ -178,7 +176,7 @@ public class WalletActivity extends AppCompatActivity {
             AddPasswordDialog dialog =
                     (AddPasswordDialog)getSupportFragmentManager().findFragmentByTag("AddPassword");
             if(dialog == null) {
-                dialog = new AddPasswordDialog(user, userPasswordHash, passwordCreatedListener);
+                dialog = new AddPasswordDialog(user, masterPasswordHash, passwordCreatedListener);
                 dialog.show(getSupportFragmentManager(), "AddPassword");
             }
         });
@@ -193,7 +191,7 @@ public class WalletActivity extends AppCompatActivity {
             UserAccountDialog dialog =
                 (UserAccountDialog)getSupportFragmentManager().findFragmentByTag("UserAccount");
             if(dialog == null) {
-                dialog = new UserAccountDialog(user, userPassword, userPasswordModifiedListener);
+                dialog = new UserAccountDialog(user, masterPassword, userPasswordModifiedListener);
                 dialog.show(getSupportFragmentManager(), "UserAccount");
             }
         });
@@ -208,6 +206,8 @@ public class WalletActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        PasswordService passwordService = new PasswordService();
+        passwordService.checkForSharedPasswordUpdates(user, masterPasswordHash);
         passwordAdapter.dataSet.clear();
         passwordAdapter.dataSet.addAll(new PasswordService().getPasswords(user.getId()));
         passwordAdapter.notifyDataSetChanged();

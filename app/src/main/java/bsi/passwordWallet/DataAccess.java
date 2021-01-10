@@ -36,11 +36,35 @@ public class DataAccess {
     }
 
     /**
-     * Retrieves user with specified login
-     * @param login unique login
-     * @return instance of User if login exists, null otherwise
+     * Retrieves the user with specified id
+     * @param id user id
+     * @return instance of User if exists, null otherwise
      */
-    public User getUser(String login) {
+    public User getUserById(long id) {
+        Cursor cursor = database.rawQuery("select * from " + USER_TABLE +
+                " where user_id = ?", new String[] {id + ""});
+        User user = null;
+
+        if(cursor.moveToFirst()) {
+            user = new User(
+                    cursor.getLong(cursor.getColumnIndex(User.USER_ID)),
+                    cursor.getString(cursor.getColumnIndex(User.LOGIN)),
+                    cursor.getString(cursor.getColumnIndex(User.ENCRYPTION_TYPE)),
+                    cursor.getString(cursor.getColumnIndex(User.PASSWORD_HASH)),
+                    cursor.getString(cursor.getColumnIndex(User.SALT))
+            );
+        }
+
+        cursor.close();
+        return user;
+    }
+
+    /**
+     * Retrieves the user with specified login
+     * @param login user's login
+     * @return instance of User if exists, null otherwise
+     */
+    public User getUserByLogin(String login) {
         Cursor cursor = database.rawQuery("select * from " + USER_TABLE + " where login = ?", new String[] {login});
         User user = null;
 
@@ -84,18 +108,18 @@ public class DataAccess {
 
     /**
      * Updates password hash and salt for user's account
-     * @param userID id of user for whom account's password should be updated
+     * @param userId id of user for whom account's password should be updated
      * @param newPassword hash of the new password
      * @param newSalt salt used to calculate password hash
      * @return true if updated successfully
      */
-    public boolean updateUserMasterPassword(long userID, String newPassword, String newSalt) {
+    public boolean updateUserMasterPassword(long userId, String newPassword, String newSalt) {
         contentValues.clear();
         contentValues.put(User.PASSWORD_HASH, newPassword);
         contentValues.put(User.SALT, newSalt);
 
         database.beginTransaction();
-        if(database.update(USER_TABLE, contentValues, "user_id = ?", new String[] {String.valueOf(userID)}) > 0)
+        if(database.update(USER_TABLE, contentValues, "user_id = ?", new String[] {userId + ""}) > 0)
             return true;
         else {
             database.endTransaction(); // rollback
@@ -104,14 +128,14 @@ public class DataAccess {
     }
 
     /**
-     * @param userID id of user for whom passwords should be retrieved
+     * @param userId id of user for whom passwords should be retrieved
      * @return ArrayList of Password objects
      */
     @NonNull
-    public ArrayList<Password> getPasswords(long userID) {
+    public ArrayList<Password> getPasswords(long userId) {
         Cursor cursor = database.rawQuery(
-                "select * from " + PASSWORD_TABLE + " where user_id = ?",
-                new String[] {String.valueOf(userID)}
+                "select * from " + PASSWORD_TABLE + " where user_id = ? and deleted = ?",
+                new String[] {userId + "", 0 + ""}
                 );
 
         ArrayList<Password> passwords = new ArrayList<>();
@@ -180,14 +204,34 @@ public class DataAccess {
         return passwordID != -1;
     };
 
+    public boolean markPasswordAsDeleted(long passwordId) {
+        contentValues.clear();
+        contentValues.put(Password.DELETED, 1);
+
+        long id = database.update(
+                PASSWORD_TABLE,
+                contentValues,
+                "password_id=?",
+                new String[] {passwordId + ""}
+        );
+
+        return id != -1;
+    }
+
     /**
-     * @param passwordID id of password that should be deleted
+     * @param passwordId id of password to delete
      * @return true if password deleted successfully
      */
-    public boolean deletePassword(long passwordID) {
+    public boolean deletePassword(long passwordId) {
         return database.delete(
-                PASSWORD_TABLE, "password_id = ?", new String[] {String.valueOf(passwordID)}
+                PASSWORD_TABLE, "password_id = ?", new String[] {passwordId + ""}
                 ) > 0;
+    }
+
+    public boolean deleteSharedPassword(long passwordId) {
+        return database.delete(
+                SHARED_PASSWORDS_TABLE, "password_id = ?", new String[] {passwordId + ""}
+        ) > 0;
     }
 
     /**
@@ -326,10 +370,13 @@ public class DataAccess {
         database.close();
     }
 
-    public boolean addSharedPassword(long passwordId, long partOwnerId) {
+    public boolean addSharedPassword(SharedPassword sharedPassword) {
         contentValues.clear();
-        contentValues.put("password_id", passwordId);
-        contentValues.put( "part_owner_id", partOwnerId);
+        contentValues.put(SharedPassword.PASSWORD_ID, sharedPassword.getPasswordId());
+        contentValues.put(SharedPassword.PART_OWNER_ID, sharedPassword.getGetPartOwnerId());
+        contentValues.put(SharedPassword.PASSWORD, sharedPassword.getPassword());
+        contentValues.put(SharedPassword.IV, sharedPassword.getIv());
+        contentValues.put(SharedPassword.NEEDS_UPDATE, sharedPassword.getNeedsUpdate());
 
         long sharedPasswordId = database.insert(SHARED_PASSWORDS_TABLE, null, contentValues);
 
@@ -337,16 +384,20 @@ public class DataAccess {
     }
 
     /**
-     * Gets passwords that have been shared with user with specified id
+     * Gets passwords that have been shared with user with specified id.
+     * Omits passwords deleted by the owner.
      * @param userId
      * @return list of passwords shared with the user - empty if no passwords found
      */
     @NonNull
-    public ArrayList<Password> getSharedPasswords(long userId) {
+    public ArrayList<Password> getPasswordsSharedWithUser(long userId) {
         ArrayList<Password> passwords = new ArrayList<>();
 
-        String sql = "select p.* from " + PASSWORD_TABLE + " p inner join " + SHARED_PASSWORDS_TABLE
-                + " sp on sp.password_id = p.password_id where sp.part_owner_id = " + userId;
+        String sql = "select " +
+                "p.password_id, p.user_id, p.login, sp.password as password, sp.iv as iv, p.website, p.description" +
+                " from " + PASSWORD_TABLE + " as p inner join " + SHARED_PASSWORDS_TABLE +
+                " as sp on sp.password_id = p.password_id " +
+                "where sp.part_owner_id = " + userId + " and p.deleted = 0";
 
         Cursor cursor = database.rawQuery(sql, null);
 
@@ -368,6 +419,89 @@ public class DataAccess {
         cursor.close();
 
         return passwords;
+    }
+
+    /**
+     * Gets shared passwords records corresponding to a password in owners table.
+     * @param passwordId id of password from the base table
+     * @return list of shared passwords
+     */
+    @NonNull
+    public ArrayList<SharedPassword> getSharedPasswords(long passwordId) {
+        ArrayList<SharedPassword> passwords = new ArrayList<>();
+
+        String sql = "select * from " + SHARED_PASSWORDS_TABLE
+                + " where password_id = " + passwordId;
+
+        Cursor cursor = database.rawQuery(sql, null);
+
+        if(cursor.getCount() > 0) {
+            while(cursor.moveToNext()) {
+                passwords.add(
+                        new SharedPassword(
+                                cursor.getLong(cursor.getColumnIndex(SharedPassword.SHARED_PASSWORD_ID)),
+                                cursor.getLong(cursor.getColumnIndex(SharedPassword.PASSWORD_ID)),
+                                cursor.getLong(cursor.getColumnIndex(SharedPassword.PART_OWNER_ID)),
+                                cursor.getString(cursor.getColumnIndex(SharedPassword.PASSWORD)),
+                                cursor.getString(cursor.getColumnIndex(SharedPassword.IV)),
+                                cursor.getInt(cursor.getColumnIndex(SharedPassword.NEEDS_UPDATE))
+                                )
+                );
+            }
+        }
+        cursor.close();
+
+        return passwords;
+    }
+
+    /**
+     * Gets passwords that have been shared with the user and need the encryption update.
+     * The update may be required when the owner changes the password or the password
+     * has been shared recently and needs to be encrypted with a master password.
+     * @param userId
+     * @return list of shared passwords that should be updated  - empty if no passwords found
+     */
+    @NonNull
+    public ArrayList<SharedPassword> getSharedPasswordsForUpdate(long userId) {
+        ArrayList<SharedPassword> passwords = new ArrayList<>();
+
+        String sql = "select sp.* from " + PASSWORD_TABLE + " p inner join " + SHARED_PASSWORDS_TABLE +
+                " sp on sp.password_id = p.password_id " +
+                "where sp.part_owner_id = " + userId + " and needs_update = 1";
+
+        Cursor cursor = database.rawQuery(sql, null);
+
+        if(cursor.getCount() > 0) {
+            while(cursor.moveToNext()) {
+                passwords.add(
+                        new SharedPassword(
+                                cursor.getLong(cursor.getColumnIndex(SharedPassword.SHARED_PASSWORD_ID)),
+                                cursor.getLong(cursor.getColumnIndex(SharedPassword.PASSWORD_ID)),
+                                cursor.getLong(cursor.getColumnIndex(SharedPassword.PART_OWNER_ID)),
+                                cursor.getString(cursor.getColumnIndex(SharedPassword.PASSWORD)),
+                                cursor.getString(cursor.getColumnIndex(SharedPassword.IV)),
+                                cursor.getInt(cursor.getColumnIndex(SharedPassword.NEEDS_UPDATE))
+                        )
+                );
+            }
+        }
+        cursor.close();
+
+        return passwords;
+    }
+
+    public boolean updateSharedPassword(SharedPassword password) {
+        contentValues.clear();
+        contentValues.put(SharedPassword.PASSWORD, password.getPassword());
+        contentValues.put(SharedPassword.IV, password.getIv());
+        contentValues.put(SharedPassword.NEEDS_UPDATE, password.getNeedsUpdate());
+
+        return database.update(
+                SHARED_PASSWORDS_TABLE,
+                contentValues,
+                "shared_password_id = ?",
+                new String[] {password.getId() + ""}
+                ) > 0;
     }
 
     @NonNull

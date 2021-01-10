@@ -60,6 +60,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                         "iv text not null," +
                         "description text," +
                         "website text not null," +
+                        "deleted integer not null default 0," +
                         "foreign key (user_id) references users (user_id)" +
                         ");"
         );
@@ -69,6 +70,9 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
                         "shared_password_id integer primary key autoincrement, " +
                         "password_id not null, " +
                         "part_owner_id not null, " +
+                        "password text not null," +
+                        "iv text not null," +
+                        "needs_update integer not null," +
                         "foreign key (password_id) references passwords (password_id)," +
                         "foreign key (part_owner_id) references users (user_id)" +
                         ");"
