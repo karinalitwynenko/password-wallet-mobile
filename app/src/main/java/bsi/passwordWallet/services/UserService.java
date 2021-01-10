@@ -10,11 +10,21 @@ import bsi.passwordWallet.User;
 import bsi.passwordWallet.Validation;
 
 public class UserService {
-    public final static String USER_DOES_NOT_EXIST = "User doesn't exist";
-    public final static String INCORRECT_PASSWORD = "Incorrect password";
-    public final static String PASSWORDS_DO_NOT_MATCH = "Passwords don't match";
-    public final static String LOGIN_EXISTS = "Login already exists";
-    public final static String COULD_NOT_CREATE = "Couldn't create user's account";
+    /**
+     * user actions
+     */
+    public static final String VIEW = "view";
+    public static final String CREATE = "create";
+    public static final String UPDATE = "update";
+    public static final String DELETE = "delete";
+    public static final String SHARE = "share";
+    public static final String RESTORE = "recover";
+
+    public static final String USER_DOES_NOT_EXIST = "User doesn't exist";
+    public static final String INCORRECT_PASSWORD = "Incorrect password";
+    public static final String PASSWORDS_DO_NOT_MATCH = "Passwords don't match";
+    public static final String LOGIN_EXISTS = "Login already exists";
+    public static final String COULD_NOT_CREATE = "Couldn't create user's account";
 
     static final String IP_ADDRESS_CANT_BE_EMPTY = "IP address can't be empty";
 
