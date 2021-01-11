@@ -8,14 +8,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,8 +28,10 @@ import java.util.TimeZone;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import bsi.PasswordWalletApplication;
 import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
+import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
 import bsi.passwordWallet.PasswordChange;
 import bsi.passwordWallet.R;
@@ -37,8 +42,11 @@ public class ActionDetailsActivity extends AppCompatActivity {
     private ListView list;
     private LogAdapter adapter;
     private User user;
-    private ArrayList<PasswordChange> passwordChanges;
     private Password password;
+    private Button recoverButton;
+    private View prevView;
+    private byte[] masterPasswordHash;
+    private Encryption encryption;
 
     class LogAdapter extends ArrayAdapter<ActivityLog> {
         private ArrayList<ActivityLog> dataSet;
@@ -58,11 +66,6 @@ public class ActionDetailsActivity extends AppCompatActivity {
                 convertView = inflater.inflate(R.layout.action_details_item, parent, false);
             }
 
-            if(position != clickedPosition)
-                convertView.setBackgroundColor(Color.WHITE);
-            else
-                convertView.setBackgroundColor(getColor(R.color.lightBlue));
-
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(new Date(change.getTime()));
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
@@ -72,10 +75,10 @@ public class ActionDetailsActivity extends AppCompatActivity {
             tv.setText(sdf.format(calendar.getTime()));
 
             tv = convertView.findViewById(R.id.previous_value);
-            tv.setText(change.getPreviousValue() + "");
+            tv.setText(passwordToString(change.getPreviousValue(), encryption, masterPasswordHash));
 
             tv = convertView.findViewById(R.id.current_value);
-            tv.setText(change.getCurrentValue() + "");
+            tv.setText(passwordToString(change.getCurrentValue(), encryption, masterPasswordHash));
 
             String actionType = change.getActionType();
             tv = convertView.findViewById(R.id.action);
@@ -113,11 +116,7 @@ public class ActionDetailsActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        try {
-            Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
-        } catch (NullPointerException e) {
-            finish();
-        }
+        Objects.requireNonNull(getSupportActionBar()).setDisplayShowTitleEnabled(false);
 
         TextView userButton = findViewById(R.id.user_button);
 
@@ -133,8 +132,10 @@ public class ActionDetailsActivity extends AppCompatActivity {
             finish();
         }
 
+        masterPasswordHash = ((PasswordWalletApplication)getApplication()).getMasterPasswordHash();
+        encryption = new Encryption();
+        recoverButton = findViewById(R.id.recover_button);
         list = findViewById(R.id.list);
-
         adapter = new LogAdapter(DataAccess.getInstance().getExtendedActivityLogs(password.getId()),this);
         list.setAdapter(adapter);
         findViewById(R.id.back_button).setOnClickListener(view -> finish());
@@ -142,11 +143,51 @@ public class ActionDetailsActivity extends AppCompatActivity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                view.setBackgroundColor(getColor(R.color.lightBlue));
                 adapter.clickedPosition = position;
-                adapter.notifyDataSetChanged();
+
+                if(prevView != null)
+                    prevView.setBackgroundColor(Color.WHITE);
+                view.setBackgroundColor(getColor(R.color.lightBlue));
+                prevView = view;
+
+                if(adapter.getItem(position).getPreviousValue().toString().isEmpty()) {
+                    recoverButton.setVisibility(View.INVISIBLE);
+                }
+                else {
+                    recoverButton.setVisibility(View.VISIBLE);
+                }
             }
         });
+
+        recoverButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(new PasswordService()
+                        .recoverPassword(
+                                adapter.dataSet.get(adapter.clickedPosition),
+                                ((PasswordWalletApplication)getApplication()).getMasterPasswordHash()
+                        )
+                ) {
+                    Toast.makeText(
+                            ActionDetailsActivity.this,
+                            "The password has been recovered.",
+                            Toast.LENGTH_LONG
+                    ).show();
+
+                    adapter.clear();
+                    adapter.addAll(DataAccess.getInstance().getExtendedActivityLogs(password.getId()));
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        });
+    }
+
+    private String passwordToString(Password password, Encryption encryption, byte[] masterPassword) {
+        if(password.getDeleted() == 1)
+            return "";
+        String asString = "website: \n" + password.getWebsite() +  "\n" + "login: \n" + password.getLogin() + "\n";
+        asString +=  "password: \n" + encryption.decryptAES128(password.getPassword(), masterPassword, Base64.getDecoder().decode(password.getIV()));
+        return asString + "\n" + "description: \n" + password.getDescription();
     }
 
 }

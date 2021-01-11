@@ -21,7 +21,7 @@ public class Password implements Serializable {
     private String iv;
     private String website;
     private String description;
-    private int deleted;
+    private int deleted = 0;
 
     public void setPassword(String password) {
         this.password = password;
@@ -75,7 +75,7 @@ public class Password implements Serializable {
         this.description = description;
     }
 
-    public Password() {}
+
 
     public int getDeleted() {
         return deleted;
@@ -85,12 +85,18 @@ public class Password implements Serializable {
         this.deleted = deleted;
     }
 
+    public Password() {
+        this.deleted = 1;
+    }
+
     public Password(
             long passwordId,
             long userId,
             String login,
             String password,
-            String iv, String website, String description) {
+            String iv,
+            String website,
+            String description) {
         this.id = passwordId;
         this.userId = userId;
         this.login = login;
@@ -98,6 +104,25 @@ public class Password implements Serializable {
         this.iv = iv;
         this.website = website;
         this.description = description;
+    }
+
+    public Password(
+            long passwordId,
+            long userId,
+            String login,
+            String password,
+            String iv,
+            String website,
+            String description,
+            int deleted) {
+        this.id = passwordId;
+        this.userId = userId;
+        this.login = login;
+        this.password = password;
+        this.iv = iv;
+        this.website = website;
+        this.description = description;
+        this.deleted = deleted;
     }
 
     public Password(Password password) {
@@ -108,15 +133,30 @@ public class Password implements Serializable {
         this.iv = password.getIV();
         this.website = password.getWebsite();
         this.description = password.getDescription();
+        this.deleted = password.deleted;
     }
 
     @NonNull
     @Override
     public String toString() {
-        if(password == null) {
+        if(deleted == 1) {
             return "";
         }
         else
             return "website: \n" + getWebsite() +  "\n" + "login: \n" + getLogin() + "\n" + "password: \n" + "**hidden**" + "\n" + "description: \n" + getDescription();
     }
+
+    public boolean compare(Password p, String plaintextPassword) {
+        if(!login.equals(p.getLogin()))
+            return false;
+        if(!password.equals(plaintextPassword))
+            return false;
+        if(!website.equals(p.getWebsite()))
+            return false;
+        if(!description.equals(p.getDescription()))
+            return false;
+        else
+            return true;
+    }
+
 }

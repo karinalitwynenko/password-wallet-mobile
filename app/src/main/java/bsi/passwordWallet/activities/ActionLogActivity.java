@@ -152,10 +152,7 @@ public class ActionLogActivity extends AppCompatActivity {
         }
 
         logList = findViewById(R.id.log_list);
-        activityLogs = DataAccess.getInstance().getActivityLogs(user.getId());
-        adapter = new LogAdapter(new ArrayList<>(),this);
-        filterLogs();
-        logList.setAdapter(adapter);
+
         findViewById(R.id.back_button).setOnClickListener(view -> finish());
 
         for(CheckBox checkBox : checkBoxes) {
@@ -192,4 +189,22 @@ public class ActionLogActivity extends AppCompatActivity {
         adapter.notifyDataSetChanged();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        activityLogs = DataAccess.getInstance().getActivityLogs(user.getId());
+
+        if(adapter == null) {
+            adapter = new LogAdapter(new ArrayList<>(),this);
+            logList.setAdapter(adapter);
+
+        }
+        else {
+            adapter.clear();
+        }
+
+        adapter.addAll(DataAccess.getInstance().getActivityLogs(user.getId()));
+        filterLogs();
+        adapter.notifyDataSetChanged();
+    }
 }

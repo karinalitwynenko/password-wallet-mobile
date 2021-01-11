@@ -2,8 +2,10 @@ package bsi.passwordWallet.services;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 
+import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
@@ -216,6 +218,42 @@ public class PasswordService {
             return dataAccess.deleteSharedPassword(passwordId);
         }
         else return false;
+    }
+
+    public boolean recoverPassword(ActivityLog log, byte[] masterPassword) {
+        Password prevPassword  = dataAccess.getPasswordById(log.getPasswordId());
+
+        if(dataAccess.updatePassword(log.getPreviousValue())) {
+            String decryptedPassword = encryption.decryptAES128(
+                    log.getPreviousValue().getPassword(),
+                    masterPassword,
+                    Base64.getDecoder().decode(log.getPreviousValue().getIV())
+            );
+
+            /*
+            register 'recover' activity
+             */
+            registerUserActivity(
+                    new ActivityLog(
+                            log.getUserId(),
+                            log.getPasswordId(),
+                            new Date().getTime(),
+                            ActivityLog.RECOVER,
+                            prevPassword,
+                            log.getPreviousValue()
+                    )
+            );
+
+            updateSharedPasswords(log.getPreviousValue(), decryptedPassword);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public void registerUserActivity(ActivityLog log) {
+        dataAccess.addActivityLog(log);
     }
 
 }

@@ -18,6 +18,7 @@ import java.util.Objects;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import bsi.PasswordWalletApplication;
 import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
@@ -33,6 +34,7 @@ public class WalletActivity extends AppCompatActivity {
     private User user;
     private String masterPassword;
     private byte[] masterPasswordHash;  // MD5 hash
+    PasswordWalletApplication app;
 
     private boolean editModeEnabled;
 
@@ -81,7 +83,7 @@ public class WalletActivity extends AppCompatActivity {
             passwordAdapter.notifyDataSetChanged();
 
             // register create activity
-            new UserService().registerUserActivity(
+            new PasswordService().registerUserActivity(
                     new ActivityLog(
                             user.getId(),
                             password.getId(),
@@ -103,6 +105,7 @@ public class WalletActivity extends AppCompatActivity {
                 // if the passwords updated successfully, update password fields
                 masterPassword = newUserPassword;
                 masterPasswordHash = newUserPasswordHash;
+                app.setMasterPasswordHash(masterPasswordHash);
 
                 Toast.makeText(
                         getApplicationContext(),
@@ -138,6 +141,7 @@ public class WalletActivity extends AppCompatActivity {
         }
 
         editModeEnabled = false;
+        app = (PasswordWalletApplication)getApplication();
 
         TextView userButton = findViewById(R.id.user_button);
 
@@ -145,6 +149,7 @@ public class WalletActivity extends AppCompatActivity {
             user = (User)getIntent().getExtras().get("user");
             masterPassword = getIntent().getExtras().getString("user_password");
             masterPasswordHash = new Encryption().calculateMD5(masterPassword);
+            app.setMasterPasswordHash(masterPasswordHash);
             userButton.setText(user.getLogin());
         }
 

@@ -1,6 +1,7 @@
 package bsi.passwordWallet.activities;
 
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,6 +17,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Objects;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
@@ -36,7 +38,7 @@ public class PasswordDetailsActivity extends AppCompatActivity {
     private boolean detailsChanged;
     private UserService userService = new UserService();
     private PasswordService passwordService = new PasswordService();
-
+    private Button recoverButton;
     private User user;
 
 
@@ -71,21 +73,16 @@ public class PasswordDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Bundle intentBundle = getIntent().getExtras();
-        try {
-            password = (Password)intentBundle.get("password");
-            masterPasswordHash = intentBundle.getByteArray("userMasterPassword");
-            editModeEnabled = intentBundle.getBoolean("editModeEnabled");
-            user = intentBundle.getParcelable("user");
-        } catch(Exception e) {
-          e.printStackTrace();
-          finish();
-        }
+        Bundle intentBundle = Objects.requireNonNull(getIntent().getExtras());
+        password = (Password)intentBundle.get("password");
+        masterPasswordHash = intentBundle.getByteArray("userMasterPassword");
+        editModeEnabled = intentBundle.getBoolean("editModeEnabled");
+        user = intentBundle.getParcelable("user");
 
         /*
          *  register 'view' activity
          */
-        userService.registerUserActivity(
+        passwordService.registerUserActivity(
                 new ActivityLog(
                         user.getId(),
                         password.getId(),
@@ -111,13 +108,13 @@ public class PasswordDetailsActivity extends AppCompatActivity {
         Encryption encryption = new Encryption();
 
         loginEditText.setText(password.getLogin());
-        passwordEditText.setText(
-                encryption.decryptAES128(
-                        password.getPassword(),
-                        masterPasswordHash,
-                        Base64.getDecoder().decode(password.getIV())
-                )
+        String plaintextPassword = encryption.decryptAES128(
+                password.getPassword(),
+                masterPasswordHash,
+                Base64.getDecoder().decode(password.getIV())
         );
+
+        passwordEditText.setText(plaintextPassword);
         websiteEditText.setText(password.getWebsite());
         descriptionEditText.setText(password.getDescription());
 
@@ -151,7 +148,7 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                         /*
                          register 'share' activity
                          */
-                        userService.registerUserActivity(
+                        passwordService.registerUserActivity(
                                 new ActivityLog(
                                         user.getId(),
                                         password.getId(),
@@ -166,10 +163,11 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             });
 
             if(!editModeEnabled) {
-                loginEditText.setBackground(ContextCompat.getDrawable(this, R.drawable.disabled_edit_text));
-                passwordEditText.setBackground(ContextCompat.getDrawable(this, R.drawable.disabled_edit_text));
-                websiteEditText.setBackground(ContextCompat.getDrawable(this, R.drawable.disabled_edit_text));
-                descriptionEditText.setBackground(ContextCompat.getDrawable(this, R.drawable.disabled_edit_text));
+                Drawable bg = ContextCompat.getDrawable(this, R.drawable.disabled_edit_text);
+                loginEditText.setBackground(bg);
+                passwordEditText.setBackground(bg);
+                websiteEditText.setBackground(bg);
+                descriptionEditText.setBackground(bg);
 
                 loginEditText.setTextColor(Color.WHITE);
                 passwordEditText.setTextColor(Color.WHITE);
@@ -212,7 +210,7 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             if(!detailsChanged)
                 return;
 
-            // TODO: check if any data actually changed
+
             // make a copy
             Password modifiedPassword = new Password(password);
 
@@ -220,6 +218,10 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             modifiedPassword.setPassword(passwordEditText.getText().toString());
             modifiedPassword.setWebsite(websiteEditText.getText().toString());
             modifiedPassword.setDescription(descriptionEditText.getText().toString());
+
+            // check for any changes
+            if(modifiedPassword.compare(password, plaintextPassword))
+                return;
 
             boolean result = false;
             try {
@@ -239,7 +241,7 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG
                 ).show();
 
-                userService.registerUserActivity(
+                passwordService.registerUserActivity(
                         new ActivityLog(user.getId(),
                                 password.getId(),
                                 new Date().getTime(),
@@ -272,7 +274,7 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             }
             else {
                 // register 'delete' activity
-                userService.registerUserActivity(
+                passwordService.registerUserActivity(
                         new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.DELETE, password, new Password()));
 
                 Toast.makeText(PasswordDetailsActivity.this, "The password has been deleted.", Toast.LENGTH_SHORT).show();

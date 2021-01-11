@@ -182,7 +182,8 @@ public class DataAccess {
                 cursor.getString(cursor.getColumnIndex(Password.PASSWORD)),
                 cursor.getString(cursor.getColumnIndex(Password.IV)),
                 cursor.getString(cursor.getColumnIndex(Password.WEBSITE)),
-                cursor.getString(cursor.getColumnIndex(Password.DESCRIPTION))
+                cursor.getString(cursor.getColumnIndex(Password.DESCRIPTION)),
+                cursor.getInt(cursor.getColumnIndex(Password.DELETED))
         );
     }
 
@@ -220,6 +221,7 @@ public class DataAccess {
         contentValues.put(Password.IV, password.getIV());
         contentValues.put(Password.WEBSITE, password.getWebsite());
         contentValues.put(Password.DESCRIPTION, password.getDescription());
+        contentValues.put(Password.DELETED, password.getDeleted());
 
         long passwordID = database.update(
                 PASSWORD_TABLE,
@@ -601,7 +603,7 @@ public class DataAccess {
 
         Cursor cursor = database.rawQuery(
                 "select * from " + ACTIVITY_LOGS_TABLE + " where password_id = ? " +
-                     "and action_type in (\"update\", \"create\", \"delete\") order by time desc",
+                     "and action_type in (\"update\", \"create\", \"delete\", \"recover\") order by time desc",
                     new String[] {passwordId + ""}
         );
 

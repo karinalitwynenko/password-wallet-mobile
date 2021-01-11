@@ -180,8 +180,4 @@ public class UserService {
             return user;
     }
 
-    public void registerUserActivity(ActivityLog log) {
-        dataAccess.addActivityLog(log);
-    }
-
 }
