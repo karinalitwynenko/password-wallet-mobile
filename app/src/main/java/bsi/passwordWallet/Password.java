@@ -2,6 +2,8 @@ package bsi.passwordWallet;
 
 import java.io.Serializable;
 
+import androidx.annotation.NonNull;
+
 public class Password implements Serializable {
     public static final String PASSWORD_ID = "password_id";
     public static final String USER_ID = "user_id";
@@ -96,5 +98,25 @@ public class Password implements Serializable {
         this.iv = iv;
         this.website = website;
         this.description = description;
+    }
+
+    public Password(Password password) {
+        this.id = password.getId();
+        this.userId = password.getUserId();
+        this.login = password.getLogin();
+        this.password = password.getPassword();
+        this.iv = password.getIV();
+        this.website = password.getWebsite();
+        this.description = password.getDescription();
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        if(password == null) {
+            return "";
+        }
+        else
+            return "website: \n" + getWebsite() +  "\n" + "login: \n" + getLogin() + "\n" + "password: \n" + "**hidden**" + "\n" + "description: \n" + getDescription();
     }
 }

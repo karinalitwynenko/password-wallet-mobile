@@ -5,34 +5,54 @@ public class ActivityLog {
     public static final String USER_ID = "user_id";
     public static final String PASSWORD_ID = "password_id";
     public static final String TIME = "time";
-    public static final String FUNCTION = "function";
+    public static final String ACTION_TYPE = "action_type";
+    public static final String PREVIOUS_VALUE = "previous_value";
+    public static final String CURRENT_VALUE = "current_value";
 
     public static final String CREATE = "create";
     public static final String VIEW = "view";
     public static final String UPDATE = "update";
     public static final String DELETE = "delete";
     public static final String SHARE = "share";
+    public static final String RECOVER = "recover";
 
     private long activityId;
     private long userId;
     private long passwordId;
     private long time;
-    private String function;
+    private String actionType;
 
-    public ActivityLog(long userId, long passwordId, long time, String function) {
-        this.activityId = activityId;
+    private Password previousValue;
+    private Password currentValue;
+
+    public ActivityLog(long userId,
+                       long passwordId,
+                       long time, String actionType,
+                       Password previousValue,
+                       Password newValue) {
         this.userId = userId;
         this.passwordId = passwordId;
         this.time = time;
-        this.function = function;
+        this.actionType = actionType;
+        this.previousValue = previousValue;
+        this.currentValue = newValue;
     }
 
-    public ActivityLog(long activityId, long userId, long passwordId, long time, String function) {
+    public ActivityLog(
+            long activityId,
+            long userId,
+            long passwordId,
+            long time,
+            String actionType,
+            Password previousValue,
+            Password newValue) {
         this.activityId = activityId;
         this.userId = userId;
         this.passwordId = passwordId;
         this.time = time;
-        this.function = function;
+        this.actionType = actionType;
+        this.previousValue = previousValue;
+        this.currentValue = newValue;
     }
 
     public long getActivityId() {
@@ -67,11 +87,27 @@ public class ActivityLog {
         this.time = time;
     }
 
-    public String getFunction() {
-        return function;
+    public String getActionType() {
+        return actionType;
     }
 
-    public void setFunction(String function) {
-        this.function = function;
+    public void setActionType(String actionType) {
+        this.actionType = actionType;
+    }
+
+    public Password getPreviousValue() {
+        return previousValue;
+    }
+
+    public void setPreviousValue(Password previousValue) {
+        this.previousValue = previousValue;
+    }
+
+    public Password getCurrentValue() {
+        return currentValue;
+    }
+
+    public void setCurrentValue(Password currentValue) {
+        this.currentValue = currentValue;
     }
 }

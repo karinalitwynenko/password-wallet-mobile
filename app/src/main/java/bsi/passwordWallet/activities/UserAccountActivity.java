@@ -27,25 +27,6 @@ import bsi.passwordWallet.User;
 import bsi.passwordWallet.services.LogService;
 
 public class UserAccountActivity extends AppCompatActivity {
-    private ListView logListView;
-    private ListView blockedIPsListView;
-
-    private LogAdapter logAdapter;
-    private BlockedIPsAdapter blockedIPsAdapter;
-    private User user;
-    private TextView userButton;
-
-    private static interface ReloadData {
-        void reloadData();
-    }
-
-    private ReloadData reloadBlockedIPsData = new ReloadData() {
-        @Override
-        public void reloadData() {
-            blockedIPsAdapter.setDataSet(DataAccess.getInstance().getBlockedIPs(user.getId()));
-            blockedIPsAdapter.notifyDataSetChanged();
-        }
-    };
 
     static class LogAdapter extends ArrayAdapter<LoginLog> {
         private final ArrayList<LoginLog> dataSet;
@@ -92,10 +73,6 @@ public class UserAccountActivity extends AppCompatActivity {
     class BlockedIPsAdapter extends ArrayAdapter<String> {
         private ArrayList<String> dataSet;
 
-        public void setDataSet(ArrayList<String> dataSet) {
-            this.dataSet = dataSet;
-        }
-
         View.OnClickListener onItemClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -139,7 +116,7 @@ public class UserAccountActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_account);
 
-        user = getIntent().getExtras().getParcelable("user");
+        User user = getIntent().getExtras().getParcelable("user");
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -149,15 +126,15 @@ public class UserAccountActivity extends AppCompatActivity {
             finish();
         }
 
-        userButton = findViewById(R.id.user_button);
+        TextView userButton = findViewById(R.id.user_button);
         userButton.setText(user.getLogin());
 
-        logListView = findViewById(R.id.login_log_list);
-        blockedIPsListView = findViewById(R.id.blocked_ip_list);
+        ListView logListView = findViewById(R.id.login_log_list);
+        ListView blockedIPsListView = findViewById(R.id.blocked_ip_list);
 
-        logAdapter = new LogAdapter(DataAccess.getInstance().getLoginLogs(user.getId(), null, 20), this);
+        LogAdapter logAdapter = new LogAdapter(DataAccess.getInstance().getLoginLogs(user.getId(), null, 20), this);
         logListView.setAdapter(logAdapter);
-        blockedIPsAdapter = new BlockedIPsAdapter(DataAccess.getInstance().getBlockedIPs(user.getId()), this);
+        BlockedIPsAdapter blockedIPsAdapter = new BlockedIPsAdapter(DataAccess.getInstance().getBlockedIPs(user.getId()), this);
         blockedIPsListView.setAdapter(blockedIPsAdapter);
 
     }

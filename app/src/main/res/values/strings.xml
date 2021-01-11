@@ -26,6 +26,13 @@
     <string name="share">Share</string>
     <string name="save">Save</string>
     <string name="share_with">Share with</string>
+    <string name="action">Action</string>
+
+    <string name="date">Date</string>
+    <string name="previous_value">Previous value</string>
+    <string name="new_value">New value</string>
+    <string name="recover">Recover</string>
+
 
 
 </resources>

@@ -38,6 +38,11 @@
             android:name=".activities.ActionLogActivity"
             android:launchMode="singleTask" >
         </activity>
+
+        <activity
+            android:name=".activities.ActionDetailsActivity"
+            android:launchMode="singleTask" >
+        </activity>
     </application>
 
 </manifest>

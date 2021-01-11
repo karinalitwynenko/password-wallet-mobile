@@ -169,7 +169,7 @@ public class DataAccessTest {
         when(cursor.getLong(anyInt())).thenReturn(1L);
         when(cursor.getString(anyInt())).thenReturn("test");
 
-        ArrayList<Password> passwords = dataAccess.getPasswords(1);
+        ArrayList<Password> passwords = dataAccess.getPasswordsByUserId(1);
 
         verify(databaseMock)
                 .rawQuery("select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?", new String[] {"1"});
@@ -187,7 +187,7 @@ public class DataAccessTest {
         when(databaseMock.rawQuery(anyString(), any())).thenReturn(cursor);
         when(cursor.moveToNext()).thenReturn(false);
 
-        ArrayList<Password> passwords = dataAccess.getPasswords(1);
+        ArrayList<Password> passwords = dataAccess.getPasswordsByUserId(1);
 
         verify(databaseMock)
                 .rawQuery("select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?", new String[] {"1"});

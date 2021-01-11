@@ -80,9 +80,16 @@ public class WalletActivity extends AppCompatActivity {
             passwords.add(password);
             passwordAdapter.notifyDataSetChanged();
 
-            // register delete activity
+            // register create activity
             new UserService().registerUserActivity(
-                    new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.CREATE)
+                    new ActivityLog(
+                            user.getId(),
+                            password.getId(),
+                            new Date().getTime(),
+                            ActivityLog.CREATE,
+                            new Password(),
+                            password
+                    )
             );
         }
     };

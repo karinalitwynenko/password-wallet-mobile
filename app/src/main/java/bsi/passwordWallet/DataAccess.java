@@ -4,7 +4,13 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -132,7 +138,7 @@ public class DataAccess {
      * @return ArrayList of Password objects
      */
     @NonNull
-    public ArrayList<Password> getPasswords(long userId) {
+    public ArrayList<Password> getPasswordsByUserId(long userId) {
         Cursor cursor = database.rawQuery(
                 "select * from " + PASSWORD_TABLE + " where user_id = ? and deleted = ?",
                 new String[] {userId + "", 0 + ""}
@@ -142,21 +148,42 @@ public class DataAccess {
 
         // loop through cursor
         while(cursor.moveToNext()) {
-            passwords.add(
-                    new Password(
-                            cursor.getLong(cursor.getColumnIndex(Password.PASSWORD_ID)),
-                            cursor.getLong(cursor.getColumnIndex(Password.USER_ID)),
-                            cursor.getString(cursor.getColumnIndex(Password.LOGIN)),
-                            cursor.getString(cursor.getColumnIndex(Password.PASSWORD)),
-                            cursor.getString(cursor.getColumnIndex(Password.IV)),
-                            cursor.getString(cursor.getColumnIndex(Password.WEBSITE)),
-                            cursor.getString(cursor.getColumnIndex(Password.DESCRIPTION))
-                    )
-            );
+            passwords.add(mapToPassword(cursor));
         }
         cursor.close();
 
         return passwords;
+    }
+
+    public Password getPasswordById(long passwordId) {
+        Cursor cursor = database.rawQuery(
+                "select * from " + PASSWORD_TABLE + " where password_id = ?",
+                new String[] {passwordId + ""}
+        );
+
+        Password password = null;
+
+        // loop through cursor
+        if(cursor.moveToNext()) {
+            password = mapToPassword(cursor);
+        }
+
+        cursor.close();
+
+        return password;
+    }
+
+    @NonNull
+    private Password mapToPassword(Cursor cursor) {
+        return new Password(
+                cursor.getLong(cursor.getColumnIndex(Password.PASSWORD_ID)),
+                cursor.getLong(cursor.getColumnIndex(Password.USER_ID)),
+                cursor.getString(cursor.getColumnIndex(Password.LOGIN)),
+                cursor.getString(cursor.getColumnIndex(Password.PASSWORD)),
+                cursor.getString(cursor.getColumnIndex(Password.IV)),
+                cursor.getString(cursor.getColumnIndex(Password.WEBSITE)),
+                cursor.getString(cursor.getColumnIndex(Password.DESCRIPTION))
+        );
     }
 
     /**
@@ -401,21 +428,20 @@ public class DataAccess {
 
         Cursor cursor = database.rawQuery(sql, null);
 
-        if(cursor.getCount() > 0) {
-            while(cursor.moveToNext()) {
-                passwords.add(
-                        new Password(
-                                cursor.getLong(cursor.getColumnIndex(Password.PASSWORD_ID)),
-                                cursor.getLong(cursor.getColumnIndex(Password.USER_ID)),
-                                cursor.getString(cursor.getColumnIndex(Password.LOGIN)),
-                                cursor.getString(cursor.getColumnIndex(Password.PASSWORD)),
-                                cursor.getString(cursor.getColumnIndex(Password.IV)),
-                                cursor.getString(cursor.getColumnIndex(Password.WEBSITE)),
-                                cursor.getString(cursor.getColumnIndex(Password.DESCRIPTION))
-                        )
-                );
-            }
+        while(cursor.moveToNext()) {
+            passwords.add(
+                    new Password(
+                            cursor.getLong(cursor.getColumnIndex(Password.PASSWORD_ID)),
+                            cursor.getLong(cursor.getColumnIndex(Password.USER_ID)),
+                            cursor.getString(cursor.getColumnIndex(Password.LOGIN)),
+                            cursor.getString(cursor.getColumnIndex(Password.PASSWORD)),
+                            cursor.getString(cursor.getColumnIndex(Password.IV)),
+                            cursor.getString(cursor.getColumnIndex(Password.WEBSITE)),
+                            cursor.getString(cursor.getColumnIndex(Password.DESCRIPTION))
+                    )
+            );
         }
+
         cursor.close();
 
         return passwords;
@@ -435,20 +461,19 @@ public class DataAccess {
 
         Cursor cursor = database.rawQuery(sql, null);
 
-        if(cursor.getCount() > 0) {
-            while(cursor.moveToNext()) {
-                passwords.add(
-                        new SharedPassword(
-                                cursor.getLong(cursor.getColumnIndex(SharedPassword.SHARED_PASSWORD_ID)),
-                                cursor.getLong(cursor.getColumnIndex(SharedPassword.PASSWORD_ID)),
-                                cursor.getLong(cursor.getColumnIndex(SharedPassword.PART_OWNER_ID)),
-                                cursor.getString(cursor.getColumnIndex(SharedPassword.PASSWORD)),
-                                cursor.getString(cursor.getColumnIndex(SharedPassword.IV)),
-                                cursor.getInt(cursor.getColumnIndex(SharedPassword.NEEDS_UPDATE))
-                                )
-                );
-            }
+        while(cursor.moveToNext()) {
+            passwords.add(
+                    new SharedPassword(
+                            cursor.getLong(cursor.getColumnIndex(SharedPassword.SHARED_PASSWORD_ID)),
+                            cursor.getLong(cursor.getColumnIndex(SharedPassword.PASSWORD_ID)),
+                            cursor.getLong(cursor.getColumnIndex(SharedPassword.PART_OWNER_ID)),
+                            cursor.getString(cursor.getColumnIndex(SharedPassword.PASSWORD)),
+                            cursor.getString(cursor.getColumnIndex(SharedPassword.IV)),
+                            cursor.getInt(cursor.getColumnIndex(SharedPassword.NEEDS_UPDATE))
+                            )
+            );
         }
+
         cursor.close();
 
         return passwords;
@@ -471,20 +496,19 @@ public class DataAccess {
 
         Cursor cursor = database.rawQuery(sql, null);
 
-        if(cursor.getCount() > 0) {
-            while(cursor.moveToNext()) {
-                passwords.add(
-                        new SharedPassword(
-                                cursor.getLong(cursor.getColumnIndex(SharedPassword.SHARED_PASSWORD_ID)),
-                                cursor.getLong(cursor.getColumnIndex(SharedPassword.PASSWORD_ID)),
-                                cursor.getLong(cursor.getColumnIndex(SharedPassword.PART_OWNER_ID)),
-                                cursor.getString(cursor.getColumnIndex(SharedPassword.PASSWORD)),
-                                cursor.getString(cursor.getColumnIndex(SharedPassword.IV)),
-                                cursor.getInt(cursor.getColumnIndex(SharedPassword.NEEDS_UPDATE))
-                        )
-                );
-            }
+        while(cursor.moveToNext()) {
+            passwords.add(
+                    new SharedPassword(
+                            cursor.getLong(cursor.getColumnIndex(SharedPassword.SHARED_PASSWORD_ID)),
+                            cursor.getLong(cursor.getColumnIndex(SharedPassword.PASSWORD_ID)),
+                            cursor.getLong(cursor.getColumnIndex(SharedPassword.PART_OWNER_ID)),
+                            cursor.getString(cursor.getColumnIndex(SharedPassword.PASSWORD)),
+                            cursor.getString(cursor.getColumnIndex(SharedPassword.IV)),
+                            cursor.getInt(cursor.getColumnIndex(SharedPassword.NEEDS_UPDATE))
+                    )
+            );
         }
+
         cursor.close();
 
         return passwords;
@@ -548,20 +572,12 @@ public class DataAccess {
         ArrayList<ActivityLog> logs = new ArrayList<>();
 
         Cursor cursor = database.rawQuery(
-                "select * from " + ACTIVITY_LOGS_TABLE + " where user_id = ?",
+                "select * from " + ACTIVITY_LOGS_TABLE + " where user_id = ? order by time desc",
                 new String[] {userId + ""}
                 );
 
         while(cursor.moveToNext()) {
-            logs.add(
-                    new ActivityLog(
-                            cursor.getLong(cursor.getColumnIndex(ActivityLog.ACTIVITY_ID)),
-                            cursor.getLong(cursor.getColumnIndex(ActivityLog.USER_ID)),
-                            cursor.getLong(cursor.getColumnIndex(ActivityLog.PASSWORD_ID)),
-                            cursor.getLong(cursor.getColumnIndex(ActivityLog.TIME)),
-                            cursor.getString(cursor.getColumnIndex(ActivityLog.FUNCTION))
-                            )
-            );
+            logs.add(mapToActivityLog(cursor));
         }
         cursor.close();
 
@@ -573,11 +589,103 @@ public class DataAccess {
         contentValues.put(ActivityLog.USER_ID, activityLog.getUserId());
         contentValues.put(ActivityLog.PASSWORD_ID, activityLog.getPasswordId());
         contentValues.put(ActivityLog.TIME, activityLog.getTime());
-        contentValues.put(ActivityLog.FUNCTION, activityLog.getFunction());
+        contentValues.put(ActivityLog.ACTION_TYPE, activityLog.getActionType());
+        contentValues.put(ActivityLog.PREVIOUS_VALUE, passwordToBytes(activityLog.getPreviousValue()));
+        contentValues.put(ActivityLog.CURRENT_VALUE, passwordToBytes(activityLog.getCurrentValue()));
 
-        long logId = database.insert(ACTIVITY_LOGS_TABLE, null, contentValues);
-
-        return logId != -1;
+        return database.insert(ACTIVITY_LOGS_TABLE, null, contentValues) != -1;
     }
 
+    public ArrayList<ActivityLog> getExtendedActivityLogs(long passwordId) {
+        ArrayList<ActivityLog> logs = new ArrayList<>();
+
+        Cursor cursor = database.rawQuery(
+                "select * from " + ACTIVITY_LOGS_TABLE + " where password_id = ? " +
+                     "and action_type in (\"update\", \"create\", \"delete\") order by time desc",
+                    new String[] {passwordId + ""}
+        );
+
+        while(cursor.moveToNext()) {
+            logs.add(mapToActivityLog(cursor));
+        }
+        cursor.close();
+
+        return logs;
+    }
+
+    private ActivityLog mapToActivityLog(Cursor cursor) {
+        return new ActivityLog(
+                cursor.getLong(cursor.getColumnIndex(ActivityLog.ACTIVITY_ID)),
+                cursor.getLong(cursor.getColumnIndex(ActivityLog.USER_ID)),
+                cursor.getLong(cursor.getColumnIndex(ActivityLog.PASSWORD_ID)),
+                cursor.getLong(cursor.getColumnIndex(ActivityLog.TIME)),
+                cursor.getString(cursor.getColumnIndex(ActivityLog.ACTION_TYPE)),
+                readPasswordFromBytes(cursor.getBlob(cursor.getColumnIndex(PasswordChange.PREVIOUS_VALUE))),
+                readPasswordFromBytes(cursor.getBlob(cursor.getColumnIndex(PasswordChange.CURRENT_VALUE)))
+        );
+    }
+
+//    public ArrayList<PasswordChange> getPasswordChanges(long passwordId) {
+//        ArrayList<PasswordChange> passwordChanges = new ArrayList<>();
+//
+//        String sql = "select * from " + PASSWORD_CHANGES_TABLE + " where password_id = ? order by time desc";
+//
+//        Cursor cursor = database.rawQuery(sql, new String[] {passwordId + ""});
+//
+//        while(cursor.moveToNext()) {
+//            passwordChanges.add(
+//                    new PasswordChange(
+//                            cursor.getLong(cursor.getColumnIndex(PasswordChange.PASSWORD_CHANGE_ID)),
+//                            cursor.getLong(cursor.getColumnIndex(PasswordChange.PASSWORD_ID)),
+//                            cursor.getLong(cursor.getColumnIndex(PasswordChange.TIME)),
+//                            cursor.getString(cursor.getColumnIndex(PasswordChange.ACTION_TYPE)),
+//                            readPasswordFromBytes(cursor.getBlob(cursor.getColumnIndex(PasswordChange.PREVIOUS_VALUE))),
+//                            readPasswordFromBytes(cursor.getBlob(cursor.getColumnIndex(PasswordChange.CURRENT_VALUE)))
+//                    )
+//            );
+//        }
+//        cursor.close();
+//
+//        return passwordChanges;
+//    }
+//
+//    public boolean createPasswordChange(PasswordChange passwordChange) {
+//        contentValues.clear();
+//        contentValues.put(PasswordChange.ACTION_TYPE, passwordChange.getActionType());
+//        contentValues.put(PasswordChange.PASSWORD_ID, passwordChange.getPasswordId());
+//        contentValues.put(PasswordChange.TIME, passwordChange.getTime());
+//        contentValues.put(PasswordChange.PREVIOUS_VALUE, passwordToBytes(passwordChange.getPreviousValue()));
+//        contentValues.put(PasswordChange.CURRENT_VALUE, passwordToBytes(passwordChange.getCurrentValue()));
+//
+//        long id = database.insert(PASSWORD_CHANGES_TABLE, null, contentValues);
+//
+//        return id != -1;
+//    }
+
+    public byte[] passwordToBytes(Password data) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(data);
+            return baos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public Password readPasswordFromBytes(byte[] data) {
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            Password password = (Password)ois.readObject();
+            return password ;
+
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }

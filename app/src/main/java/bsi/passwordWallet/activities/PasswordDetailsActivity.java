@@ -23,6 +23,7 @@ import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
+import bsi.passwordWallet.PasswordChange;
 import bsi.passwordWallet.R;
 import bsi.passwordWallet.User;
 import bsi.passwordWallet.services.PasswordService;
@@ -81,9 +82,19 @@ public class PasswordDetailsActivity extends AppCompatActivity {
           finish();
         }
 
-        // register 'view' activity
+        /*
+         *  register 'view' activity
+         */
         userService.registerUserActivity(
-                new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.VIEW));
+                new ActivityLog(
+                        user.getId(),
+                        password.getId(),
+                        new Date().getTime(),
+                        ActivityLog.VIEW,
+                        new Password(),
+                        password
+                )
+        );
 
         setContentView(R.layout.activity_password_details);
 
@@ -137,9 +148,19 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                         usersAdapter.clear();
                         usersAdapter.addAll(DataAccess.getInstance().getPartOwners(password.getId()));
                         usersAdapter.notifyDataSetChanged();
-                        // register 'share' activity
+                        /*
+                         register 'share' activity
+                         */
                         userService.registerUserActivity(
-                                new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.SHARE));
+                                new ActivityLog(
+                                        user.getId(),
+                                        password.getId(),
+                                        new Date().getTime(),
+                                        ActivityLog.SHARE,
+                                        new Password(),
+                                        password
+                                )
+                        );
                     }
                 }
             });
@@ -191,14 +212,18 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             if(!detailsChanged)
                 return;
 
-            password.setLogin(loginEditText.getText().toString());
-            password.setPassword(passwordEditText.getText().toString());
-            password.setWebsite(websiteEditText.getText().toString());
-            password.setDescription(descriptionEditText.getText().toString());
+            // TODO: check if any data actually changed
+            // make a copy
+            Password modifiedPassword = new Password(password);
+
+            modifiedPassword.setLogin(loginEditText.getText().toString());
+            modifiedPassword.setPassword(passwordEditText.getText().toString());
+            modifiedPassword.setWebsite(websiteEditText.getText().toString());
+            modifiedPassword.setDescription(descriptionEditText.getText().toString());
 
             boolean result = false;
             try {
-                result = passwordService.updatePassword(password, masterPasswordHash);
+                result = passwordService.updatePassword(modifiedPassword, masterPasswordHash);
             } catch (PasswordService.PasswordCreationException e) {
                 Toast.makeText(
                         PasswordDetailsActivity.this,
@@ -214,7 +239,16 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG
                 ).show();
 
-                // TODO: register changes
+                userService.registerUserActivity(
+                        new ActivityLog(user.getId(),
+                                password.getId(),
+                                new Date().getTime(),
+                                ActivityLog.UPDATE,
+                                password,
+                                modifiedPassword
+                        )
+                );
+
             }
 
         });
@@ -239,7 +273,7 @@ public class PasswordDetailsActivity extends AppCompatActivity {
             else {
                 // register 'delete' activity
                 userService.registerUserActivity(
-                        new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.DELETE));
+                        new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.DELETE, password, new Password()));
 
                 Toast.makeText(PasswordDetailsActivity.this, "The password has been deleted.", Toast.LENGTH_SHORT).show();
                 finish();

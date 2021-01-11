@@ -7,6 +7,7 @@ import java.util.HashMap;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
+import bsi.passwordWallet.PasswordChange;
 import bsi.passwordWallet.SharedPassword;
 import bsi.passwordWallet.User;
 import bsi.passwordWallet.Validation;
@@ -153,7 +154,7 @@ public class PasswordService {
     }
 
     public ArrayList<Password> getPasswords(long partOwnerId) {
-        ArrayList<Password> passwords = dataAccess.getPasswords(partOwnerId);
+        ArrayList<Password> passwords = dataAccess.getPasswordsByUserId(partOwnerId);
         passwords.addAll(dataAccess.getPasswordsSharedWithUser(partOwnerId));
 
         return passwords;
