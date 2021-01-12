@@ -16,7 +16,7 @@ public class ActivityLog {
     public static final String SHARE = "share";
     public static final String RECOVER = "recover";
 
-    private long activityId;
+    private long id;
     private long userId;
     private long passwordId;
     private long time;
@@ -39,14 +39,14 @@ public class ActivityLog {
     }
 
     public ActivityLog(
-            long activityId,
+            long id,
             long userId,
             long passwordId,
             long time,
             String actionType,
             Password previousValue,
             Password newValue) {
-        this.activityId = activityId;
+        this.id = id;
         this.userId = userId;
         this.passwordId = passwordId;
         this.time = time;
@@ -55,12 +55,12 @@ public class ActivityLog {
         this.currentValue = newValue;
     }
 
-    public long getActivityId() {
-        return activityId;
+    public long getId() {
+        return id;
     }
 
-    public void setActivityId(long activityId) {
-        this.activityId = activityId;
+    public void setId(long id) {
+        this.id = id;
     }
 
     public long getUserId() {

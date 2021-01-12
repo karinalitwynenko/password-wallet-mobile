@@ -46,7 +46,7 @@ public class UserServiceTest {
     public void signIn_AddsIpToBlocked_IfIpCheckReturnedTrueAndPasswordVerificationFailed() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(
                 new User(
                         1L,
                         "testlogin",
@@ -74,7 +74,7 @@ public class UserServiceTest {
                 ))
         );
 
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         verify(encryptionMock).calculateSHA512("invalidtestpass", "testsalt");
         verify(dataAccessMock).createBlockedIP(1L, "10.0.10.1");
     }
@@ -83,7 +83,7 @@ public class UserServiceTest {
     public void signIn_CreatesSuccessLog_IfUserAuthenticationSucceeded() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(
                 new User(
                         1L,
                         "testlogin",
@@ -109,7 +109,7 @@ public class UserServiceTest {
     public void signIn_CreatesFailLog_IfUserAuthenticationFailed() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(
                 new User(
                         1L,
                         "testlogin",
@@ -179,7 +179,7 @@ public class UserServiceTest {
     public void signIn_ThrowsUserAccountException_IfUserNotExist() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(null);
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(null);
 
         UserService.UserAccountException thrown = assertThrows(
                 UserService.UserAccountException.class,
@@ -192,7 +192,7 @@ public class UserServiceTest {
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock).validatePassword("testpasswd");
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         assertEquals(UserService.USER_DOES_NOT_EXIST, thrown.getMessage());
     }
 
@@ -200,7 +200,7 @@ public class UserServiceTest {
     public void signIn_ReturnsUserWithSHA512Hash_IfUserExists() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(
                 new User(
                         1L,
                         "testlogin",
@@ -228,7 +228,7 @@ public class UserServiceTest {
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock).validatePassword("testpass");
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         verify(encryptionMock).calculateSHA512("testpass", "testsalt");
         assertNotNull(user);
     }
@@ -237,7 +237,7 @@ public class UserServiceTest {
     public void signIn_ReturnsUserWithHmacHash_IfUserExists() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(
                 new User(
                         1L,
                         "testlogin",
@@ -265,7 +265,7 @@ public class UserServiceTest {
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock).validatePassword("testpass");
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         verify(encryptionMock).calculateHMAC("testpass", "testsalt");
         assertNotNull(user);
     }
@@ -274,7 +274,7 @@ public class UserServiceTest {
     public void signIn_ThrowsUserAccountException_IfUserPasswordIncorrect() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(
                 new User(
                         1L,
                         "testlogin",
@@ -304,7 +304,7 @@ public class UserServiceTest {
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock).validatePassword("testpass");
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         verify(encryptionMock).calculateHMAC("testpass", "testsalt");
         assertEquals(UserService.INCORRECT_PASSWORD, thrown.getMessage());
     }
@@ -398,7 +398,7 @@ public class UserServiceTest {
     public void signUp_ThrowsUserAccountException_IfLoginAlreadyInUse() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(new User());
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(new User());
 
         UserService.UserAccountException thrown = assertThrows(
                 UserService.UserAccountException.class,
@@ -412,7 +412,7 @@ public class UserServiceTest {
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock, times(2)).validatePassword("testpasswd");
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         assertEquals(UserService.LOGIN_EXISTS, thrown.getMessage());
     }
 
@@ -420,7 +420,7 @@ public class UserServiceTest {
     public void signUp_ReturnsNewUserWithSHA512Hash_IfUserSuccessfullyCreated() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(null);
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(null);
         when(dataAccessMock.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn(new User());
 
         when(encryptionMock.generateSalt64()).thenReturn("testsalt");
@@ -440,7 +440,7 @@ public class UserServiceTest {
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock, times(2)).validatePassword("testpasswd");
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         verify(encryptionMock).generateSalt64();
         verify(encryptionMock).calculateSHA512("testpasswd", "testsalt");
         verify(dataAccessMock).createUser(
@@ -453,7 +453,7 @@ public class UserServiceTest {
     public void signUp_ReturnsNewUserWithHmacHash_IfUserSuccessfullyCreated() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(null);
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(null);
         when(dataAccessMock.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn(new User());
 
         when(encryptionMock.generateSalt64()).thenReturn("testsalt");
@@ -473,7 +473,7 @@ public class UserServiceTest {
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock, times(2)).validatePassword("testpasswd");
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         verify(encryptionMock).generateSalt64();
         verify(encryptionMock).calculateHMAC("testpasswd", "testsalt");
         verify(dataAccessMock).createUser(
@@ -486,7 +486,7 @@ public class UserServiceTest {
     public void signUp_ThrowsUserAccountException_IfUserCouldNotBeCreated() {
         when(validationMock.validateLogin(anyString())).thenReturn("");
         when(validationMock.validatePassword(anyString())).thenReturn("");
-        when(dataAccessMock.getUser(anyString())).thenReturn(null);
+        when(dataAccessMock.getUserByLogin(anyString())).thenReturn(null);
         when(dataAccessMock.createUser(anyString(), anyString(), anyString(), anyString())).thenReturn(null);
 
         when(encryptionMock.generateSalt64()).thenReturn("testsalt");
@@ -504,7 +504,7 @@ public class UserServiceTest {
 
         verify(validationMock).validateLogin("testlogin");
         verify(validationMock, times(2)).validatePassword("testpasswd");
-        verify(dataAccessMock).getUser("testlogin");
+        verify(dataAccessMock).getUserByLogin("testlogin");
         verify(encryptionMock).generateSalt64();
         verify(encryptionMock).calculateHMAC("testpasswd", "testsalt");
         verify(dataAccessMock).createUser(

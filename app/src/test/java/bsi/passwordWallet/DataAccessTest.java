@@ -58,11 +58,13 @@ public class DataAccessTest {
         when(databaseMock.rawQuery(anyString(), any(String[].class))).thenReturn(cursor);
         when(cursor.getCount()).thenReturn(0);
 
-        User user = dataAccess.getUser("testLogin");
+        User user = dataAccess.getUserByLogin("testLogin");
 
         verify(databaseMock)
                 .rawQuery("select * from " + DataAccess.USER_TABLE + " where login = ?", new String[] {"testLogin"});
-        verify(cursor).getCount();
+
+        verify(cursor).moveToFirst();
+        verify(cursor).close();
         verifyNoMoreInteractions(cursor);
         assertNull(user);
     }
@@ -71,21 +73,22 @@ public class DataAccessTest {
     public void getUser_ReturnsUser_IfUserExists() {
         Cursor cursor = mock(Cursor.class);
         when(databaseMock.rawQuery(anyString(), any(String[].class))).thenReturn(cursor);
-        when(cursor.getCount()).thenReturn(1);
+        when(cursor.moveToFirst()).thenReturn(true);
         when(cursor.getLong(anyInt())).thenReturn(1L);
         when(cursor.getString(anyInt())).thenReturn("test");
 
-        User user = dataAccess.getUser("testLogin");
+        User user = dataAccess.getUserByLogin("testLogin");
 
         verify(databaseMock)
                 .rawQuery("select * from " + DataAccess.USER_TABLE + " where login = ?", new String[] {"testLogin"});
-        verify(cursor).getCount();
         verify(cursor).moveToFirst();
         verify(cursor).getColumnIndex(User.USER_ID);
         verify(cursor).getColumnIndex(User.LOGIN);
         verify(cursor).getColumnIndex(User.ENCRYPTION_TYPE);
         verify(cursor).getColumnIndex(User.PASSWORD_HASH);
         verify(cursor).getColumnIndex(User.SALT);
+        verify(cursor).close();
+
         assertNotNull(user);
         assertEquals(1L, user.getId());
         assertEquals("test", user.getLogin());
@@ -172,7 +175,10 @@ public class DataAccessTest {
         ArrayList<Password> passwords = dataAccess.getPasswordsByUserId(1);
 
         verify(databaseMock)
-                .rawQuery("select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?", new String[] {"1"});
+                .rawQuery(
+                        "select * from " + DataAccess.PASSWORD_TABLE +
+                        " where user_id = ? and deleted = ?", new String[] {"1", "0"}
+                        );
         verify(cursor, times(3)).moveToNext();
         verify(cursor, times(4)).getLong(anyInt());
         verify(cursor, times(10)).getString(anyInt());
@@ -190,8 +196,12 @@ public class DataAccessTest {
         ArrayList<Password> passwords = dataAccess.getPasswordsByUserId(1);
 
         verify(databaseMock)
-                .rawQuery("select * from " + DataAccess.PASSWORD_TABLE + " where user_id = ?", new String[] {"1"});
+                .rawQuery(
+                        "select * from " + DataAccess.PASSWORD_TABLE +
+                        " where user_id = ? and deleted = ?", new String[] {"1", "0"}
+                        );
         verify(cursor, times(1)).moveToNext();
+        verify(cursor).close();
         verifyNoMoreInteractions(cursor);
         assertNotNull(passwords);
         assertEquals(0, passwords.size());

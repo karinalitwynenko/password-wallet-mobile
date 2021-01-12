@@ -25,7 +25,6 @@ import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
-import bsi.passwordWallet.PasswordChange;
 import bsi.passwordWallet.R;
 import bsi.passwordWallet.User;
 import bsi.passwordWallet.services.PasswordService;
@@ -241,6 +240,9 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG
                 ).show();
 
+                /*
+                register 'update' activity
+                 */
                 passwordService.registerUserActivity(
                         new ActivityLog(user.getId(),
                                 password.getId(),
@@ -250,6 +252,8 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                                 modifiedPassword
                         )
                 );
+
+                finish();
 
             }
 
@@ -273,11 +277,14 @@ public class PasswordDetailsActivity extends AppCompatActivity {
                 ).show();
             }
             else {
+                Password copy = new Password(password);
+                copy.setDeleted(1);
+
                 // register 'delete' activity
                 passwordService.registerUserActivity(
-                        new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.DELETE, password, new Password()));
+                        new ActivityLog(user.getId(), password.getId(), new Date().getTime(), ActivityLog.DELETE, password, copy));
 
-                Toast.makeText(PasswordDetailsActivity.this, "The password has been deleted.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PasswordDetailsActivity.this, "Password has been deleted.", Toast.LENGTH_SHORT).show();
                 finish();
             }
         });

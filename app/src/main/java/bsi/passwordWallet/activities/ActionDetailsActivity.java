@@ -33,7 +33,6 @@ import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
-import bsi.passwordWallet.PasswordChange;
 import bsi.passwordWallet.R;
 import bsi.passwordWallet.User;
 import bsi.passwordWallet.services.PasswordService;

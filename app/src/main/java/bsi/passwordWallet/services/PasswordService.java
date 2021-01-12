@@ -9,7 +9,6 @@ import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.Encryption;
 import bsi.passwordWallet.Password;
-import bsi.passwordWallet.PasswordChange;
 import bsi.passwordWallet.SharedPassword;
 import bsi.passwordWallet.User;
 import bsi.passwordWallet.Validation;
@@ -131,7 +130,7 @@ public class PasswordService {
         // generate new initialization vector
         byte[] randomIV = encryption.randomIV();
 
-        /**
+        /*
          *  Temporarily encrypt the password using the second user's password hash.
          *  Use MD5 to match key size for AES128.
           */
@@ -254,6 +253,38 @@ public class PasswordService {
 
     public void registerUserActivity(ActivityLog log) {
         dataAccess.addActivityLog(log);
+    }
+
+    public boolean updateActivityLogsData(long userId, byte[] masterPassword, byte[] newMasterPassword) {
+        ArrayList<ActivityLog> logs = dataAccess.getExtendedActivityLogsByUser(userId);
+        String decryptedPassword;
+        byte[] randomIV;
+        boolean result = true;
+        ArrayList<Password> passwordVersions = new ArrayList<>();
+        for(ActivityLog log : logs) {
+            passwordVersions.clear();
+            passwordVersions.add(log.getPreviousValue());
+            passwordVersions.add(log.getCurrentValue());
+
+            for(Password password : passwordVersions) {
+                if (password.getDeleted() != 1) {
+                    decryptedPassword = encryption.decryptAES128(
+                            password.getPassword(),
+                            masterPassword,
+                            Base64.getDecoder().decode(password.getIV())
+                    );
+
+                    randomIV = encryption.randomIV();
+                    password.setPassword(encryption.encryptAES128(decryptedPassword, newMasterPassword, randomIV));
+                    password.setIV(Base64.getEncoder().encodeToString(randomIV));
+                }
+            }
+
+            result = dataAccess.updateActivityLogData(log);
+
+        }
+
+        return result;
     }
 
 }

@@ -10,16 +10,6 @@ import bsi.passwordWallet.User;
 import bsi.passwordWallet.Validation;
 
 public class UserService {
-    /**
-     * user actions
-     */
-    public static final String VIEW = "view";
-    public static final String CREATE = "create";
-    public static final String UPDATE = "update";
-    public static final String DELETE = "delete";
-    public static final String SHARE = "share";
-    public static final String RESTORE = "recover";
-
     public static final String USER_DOES_NOT_EXIST = "User doesn't exist";
     public static final String INCORRECT_PASSWORD = "Incorrect password";
     public static final String PASSWORDS_DO_NOT_MATCH = "Passwords don't match";
@@ -76,8 +66,9 @@ public class UserService {
         else
             newPasswordHash = encryption.calculateHMAC(newPassword, newSalt);
 
-        if(dataAccess.updateUserMasterPassword(user.getId(), newPasswordHash, newSalt))
+        if(dataAccess.updateUserMasterPassword(user.getId(), newPasswordHash, newSalt)) {
             return newPassword;
+        }
         else // if any error occurred
             throw new UserAccountException("Could not change user's password");
     }

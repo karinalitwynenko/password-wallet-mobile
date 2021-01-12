@@ -28,7 +28,6 @@ import bsi.passwordWallet.services.PasswordService;
 import bsi.passwordWallet.services.UserService;
 
 public class WalletActivity extends AppCompatActivity {
-    private ListView passwordsListView;
     private ArrayList<Password> passwords;
     private PasswordAdapter passwordAdapter;
     private User user;
@@ -62,7 +61,6 @@ public class WalletActivity extends AppCompatActivity {
             tv = convertView.findViewById(R.id.description);
             tv.setText(password.getDescription());
 
-            // Return the completed view to render on screen
             return convertView;
         }
     }
@@ -89,8 +87,8 @@ public class WalletActivity extends AppCompatActivity {
                             password.getId(),
                             new Date().getTime(),
                             ActivityLog.CREATE,
-                            new Password(),
-                            password
+                            null,
+                            null
                     )
             );
         }
@@ -102,6 +100,9 @@ public class WalletActivity extends AppCompatActivity {
             byte[] newUserPasswordHash = new Encryption().calculateMD5(newUserPassword);
             PasswordService passwordService = new PasswordService();
             if(passwordService.updatePasswordHashes(passwords, masterPasswordHash, newUserPasswordHash)) {
+
+                passwordService.updateActivityLogsData(user.getId(), masterPasswordHash, newUserPasswordHash);
+
                 // if the passwords updated successfully, update password fields
                 masterPassword = newUserPassword;
                 masterPasswordHash = newUserPasswordHash;
@@ -153,7 +154,7 @@ public class WalletActivity extends AppCompatActivity {
             userButton.setText(user.getLogin());
         }
 
-        passwordsListView = findViewById(R.id.password_list);
+        ListView passwordsListView = findViewById(R.id.password_list);
         Button editModeToggle = findViewById(R.id.edit_mode_toggle);
 
         passwords = new ArrayList<>();

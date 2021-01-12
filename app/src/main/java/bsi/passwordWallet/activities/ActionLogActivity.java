@@ -13,6 +13,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.TimeZone;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.room.ForeignKey;
 import bsi.passwordWallet.ActivityLog;
 import bsi.passwordWallet.DataAccess;
 import bsi.passwordWallet.R;
@@ -162,6 +164,17 @@ public class ActionLogActivity extends AppCompatActivity {
         logList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ActivityLog log =  adapter.getItem(position);
+                if (user.getId() != log.getCurrentValue().getUserId()) {
+                    Toast.makeText(
+                            ActionLogActivity.this,
+                            "Details can be displayed by owner only.",
+                            Toast.LENGTH_SHORT
+                    ).show();
+
+                    return;
+                }
+
                 Intent intent = new Intent(ActionLogActivity.this, ActionDetailsActivity.class);
                 intent.putExtra("user", user);
                 intent.putExtra("password_id", adapter.getItem(position).getPasswordId());

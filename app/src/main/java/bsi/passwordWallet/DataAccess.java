@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -615,6 +614,36 @@ public class DataAccess {
         return logs;
     }
 
+    public ArrayList<ActivityLog> getExtendedActivityLogsByUser(long userId) {
+        ArrayList<ActivityLog> logs = new ArrayList<>();
+
+        Cursor cursor = database.rawQuery(
+                "select * from " + ACTIVITY_LOGS_TABLE +
+                     " where user_id = ? and action_type in (\"update\", \"create\", \"delete\", \"recover\")",
+                new String[] {userId + ""}
+        );
+
+        while(cursor.moveToNext()) {
+            logs.add(mapToActivityLog(cursor));
+        }
+        cursor.close();
+
+        return logs;
+    }
+
+    public boolean updateActivityLogData(ActivityLog log) {
+        contentValues.clear();
+        contentValues.put(ActivityLog.PREVIOUS_VALUE, passwordToBytes(log.getPreviousValue()));
+        contentValues.put(ActivityLog.CURRENT_VALUE, passwordToBytes(log.getCurrentValue()));
+
+        return database.update(
+                ACTIVITY_LOGS_TABLE,
+                contentValues,
+                "activity_id = ?",
+                new String[] {log.getId() + ""}
+        ) > 0;
+    }
+
     private ActivityLog mapToActivityLog(Cursor cursor) {
         return new ActivityLog(
                 cursor.getLong(cursor.getColumnIndex(ActivityLog.ACTIVITY_ID)),
@@ -622,8 +651,8 @@ public class DataAccess {
                 cursor.getLong(cursor.getColumnIndex(ActivityLog.PASSWORD_ID)),
                 cursor.getLong(cursor.getColumnIndex(ActivityLog.TIME)),
                 cursor.getString(cursor.getColumnIndex(ActivityLog.ACTION_TYPE)),
-                readPasswordFromBytes(cursor.getBlob(cursor.getColumnIndex(PasswordChange.PREVIOUS_VALUE))),
-                readPasswordFromBytes(cursor.getBlob(cursor.getColumnIndex(PasswordChange.CURRENT_VALUE)))
+                readPasswordFromBytes(cursor.getBlob(cursor.getColumnIndex(ActivityLog.PREVIOUS_VALUE))),
+                readPasswordFromBytes(cursor.getBlob(cursor.getColumnIndex(ActivityLog.CURRENT_VALUE)))
         );
     }
 
